@@ -13,10 +13,12 @@ class Component(
     connectors: typing.MutableSequence["connector_lib.Connector"] = dataclasses.field(
         default_factory=list,
         repr=False,
+        init=False,
     )
     _t: float = dataclasses.field(
         default=0,
         repr=False,
+        init=False,
     )
     _name: typing.Optional[str] = None
 
@@ -51,9 +53,8 @@ class Component(
 
     @typing.override
     def validate(self) -> None:
-        duplicates = {connector.name for connector in self.connectors if self.connectors.count(connector.name) > 1}
-        if duplicates:
-            raise self.ValidationError(f'component {self} has duplicate connectors {duplicates}')
+        if len(self.connectors) != len(self.connectors_by_name):
+            raise self.ValidationError(f'{self} has duplicate connectors {self.connectors}')
         for connector in self.values():
             if connector.component is not self:
                 raise self.ValidationError(f'component {self} not connected to connector {connector}')

@@ -5,14 +5,12 @@ import typing
 
 @dataclasses.dataclass(kw_only=True)
 class Object(abc.ABC):
-    class RunTimeout(Exception):
-        ...
+    class RunTimeout(Exception): ...
 
-    class ValidationError(Exception):
-        ...
+    class ValidationError(Exception): ...
 
     def __post_init__(self) -> None:
-        self.validate()
+        self.validate_all()
 
     def validate(self) -> None:
         for object in self.connected_objects:
@@ -21,8 +19,7 @@ class Object(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def connected_objects(self) -> typing.Iterable["Object"]:
-        ...
+    def connected_objects(self) -> typing.Iterable["Object"]: ...
 
     @property
     @typing.final
@@ -37,13 +34,11 @@ class Object(abc.ABC):
         return objects
 
     @abc.abstractmethod
-    def tick(self, t: float, dt: float) -> None:
-        ...
+    def tick(self, t: float, dt: float) -> None: ...
 
     @property
     @abc.abstractmethod
-    def is_stable(self) -> bool:
-        ...
+    def is_stable(self) -> bool: ...
 
     def apply_to_all(self, f: typing.Callable[["Object"], None]) -> None:
         for object in self.all_connected_objects:

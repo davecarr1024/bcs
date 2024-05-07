@@ -12,11 +12,11 @@ class Connector(
 ):
     name: str
     component: "component_lib.Component"
-    connections: typing.MutableSequence[
-        "connection_lib.Connection"
-    ] = dataclasses.field(
-        default_factory=list,
-        repr=False,
+    connections: typing.MutableSequence["connection_lib.Connection"] = (
+        dataclasses.field(
+            default_factory=list,
+            repr=False,
+        )
     )
 
     def __str__(self) -> str:

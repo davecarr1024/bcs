@@ -1,11 +1,26 @@
 import unittest
 
+import bcs
 from bcs.components import logic
 
 from . import component
 
 
 class ComponentTest(unittest.TestCase):
+    def test_duplicate_connector(self) -> None:
+        with self.assertRaises(component.Component.ValidationError):
+            c = component.Component()
+            a = bcs.Connector(name="a", component=c)
+            b = bcs.Connector(name="a", component=c)
+
+    def test_connector_disconnected(self) -> None:
+        with self.assertRaises(component.Component.ValidationError):
+            c = component.Component()
+            a = bcs.Connector(name="a", component=c)
+            a.component = component.Component()
+            a.validate_all()
+            c.validate_all()
+
     def test_run_empty(self) -> None:
         component.Component().run_until_stable()
 
