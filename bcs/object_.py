@@ -40,7 +40,6 @@ class Object(abc.ABC):
         ...
 
     def apply_to_all(self, f: typing.Callable[["Object"], None]) -> None:
-        print(f"apply_to_all {len(list(self.all_connected_objects))}")
         for object in self.all_connected_objects:
             f(object)
 
@@ -50,15 +49,33 @@ class Object(abc.ABC):
     def tick_all(self, t: float, dt: float) -> None:
         self.apply_to_all(lambda object: object.tick(t, dt))
 
-    def run_until_stable(self, *, max_t: float = 10, dt: float = 0.01) -> float:
+    def run_until(
+        self,
+        cond: typing.Callable[[], bool],
+        *,
+        max_t: float = 10,
+        dt: float = 0.01,
+    ) -> float:
         self.validate_all()
         t: float = 0
-        print(f"run_until_stable {max_t} {dt}")
         while t < max_t:
-            print(f"tick {dt} {t}/{max_t}")
+            if cond():
+                return t
             self.tick_all(t, dt)
             t += dt
-            if self.is_stable:
-                print(f"stable - quitting")
-                return t
-        raise Exception(f"failed to become stable in {max_t}")
+        raise Exception(f"{self} failed to satisfy condition {cond} in {max_t}s")
+
+    def run_until_stable(
+        self,
+        *,
+        max_t: float = 10,
+        dt: float = 0.01,
+    ) -> float:
+        try:
+
+            def is_stable():
+                return self.is_stable
+
+            return self.run_until(is_stable, max_t=max_t, dt=dt)
+        except Exception:
+            raise Exception(f"{self} failed to become stable in {max_t}s")

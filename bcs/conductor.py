@@ -28,7 +28,6 @@ class Conductor(object_.Object):
 
     @typing.override
     def tick(self, t: float, dt: float) -> None:
-        print(f"tick conductor {self} {t} {dt}")
         self._t = t
 
     @property
@@ -40,6 +39,7 @@ class Conductor(object_.Object):
         if state != self._state:
             self._state = state
             self._last_change_t = self._t
+            print(f"{self} got state {self._state} at {self._t}")
             self._on_state_change(self._state)
 
     @property
@@ -49,9 +49,6 @@ class Conductor(object_.Object):
     @property
     @typing.override
     def is_stable(self) -> bool:
-        print(
-            f"{self} is_stable? {self._t} - {self._last_change_t} = {self.stable_time}/{self._min_stable_time} = {self.stable_time >= self._min_stable_time}"
-        )
         return self.stable_time >= self._min_stable_time
 
     @abc.abstractmethod
@@ -65,6 +62,6 @@ class Conductor(object_.Object):
         dt: float = 0.01,
     ) -> float:
         t = self.run_until_stable(max_t=max_t, dt=dt)
-        if not self.state == state:
+        if self.state != state:
             raise Exception(f"{self} failed to stabilze at state {state}")
         return t

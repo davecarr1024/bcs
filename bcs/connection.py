@@ -17,6 +17,9 @@ class Connection(
     _update_time_limit: float = dataclasses.field(init=False, repr=False)
     _update_time: float = dataclasses.field(init=False, repr=False, default=0)
 
+    def __str__(self) -> str:
+        return f"[{','.join(map(str,self))}]"
+
     def __len__(self) -> int:
         return len(self.connectors)
 

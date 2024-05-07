@@ -5,7 +5,6 @@ from bcs.components.logic import and_
 
 class AndTest(unittest.TestCase):
     def test_eval(self) -> None:
-        c = and_.And()
         for a, b, o in list[tuple[bool, bool, bool]](
             [
                 (False, False, False),
@@ -15,6 +14,7 @@ class AndTest(unittest.TestCase):
             ]
         ):
             with self.subTest(a=a, b=b, o=o):
+                c = and_.And()
                 c["a"].state = a
                 c["b"].state = b
                 c.run_until_stable()

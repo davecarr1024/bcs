@@ -13,12 +13,15 @@ class Connector(
 ):
     name: str
     component: "component_lib.Component"
-    connections: typing.MutableSequence[
-        "connection_lib.Connection"
-    ] = dataclasses.field(
-        default_factory=list,
-        repr=False,
+    connections: typing.MutableSequence["connection_lib.Connection"] = (
+        dataclasses.field(
+            default_factory=list,
+            repr=False,
+        )
     )
+
+    def __str__(self) -> str:
+        return f"{self.component}.{self.name}"
 
     def __post_init__(self):
         self.component.connectors.append(self)
@@ -38,7 +41,6 @@ class Connector(
 
     @typing.override
     def _on_state_change(self, state: bool) -> None:
-        print(f"connector {self.name} got state {state}")
         for connection in self.connections:
             connection.state = state
 
@@ -56,6 +58,12 @@ class Connector(
                 if component not in components:
                     components.append(component)
         return components
+
+    @typing.overload
+    def connect(self, rhs: "connection_lib.Connection") -> None: ...
+
+    @typing.overload
+    def connect(self, rhs: "Connector") -> None: ...
 
     def connect(self, rhs: "connection_lib.Connection|Connector") -> None:
         match rhs:

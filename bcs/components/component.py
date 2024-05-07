@@ -18,6 +18,10 @@ class Component(
         compare=False,
         init=False,
     )
+    _name: typing.Optional[str] = None
+
+    def __str__(self) -> str:
+        return self.name
 
     def __len__(self) -> int:
         return len(self.connectors)
@@ -29,6 +33,10 @@ class Component(
         return self.connectors_by_name[name]
 
     @property
+    def name(self) -> str:
+        return self._name or self.type()
+
+    @property
     def connectors_by_name(self) -> typing.Mapping[str, "connector_lib.Connector"]:
         return {connector.name: connector for connector in self.connectors}
 
@@ -36,7 +44,7 @@ class Component(
         return self.connectors_by_name[name]
 
     @classmethod
-    def name(cls) -> str:
+    def type(cls) -> str:
         return cls.__name__
 
     @typing.override
@@ -53,7 +61,6 @@ class Component(
     @typing.override
     def tick(self, t: float, dt: float) -> None:
         self._t = t
-        print(f"tick component {self} {t} {dt}")
 
     @property
     @typing.override

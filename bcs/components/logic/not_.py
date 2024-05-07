@@ -12,5 +12,4 @@ class Not(component.Component):
     @typing.override
     def tick(self, t: float, dt: float) -> None:
         super().tick(t, dt)
-        print(f"tick not {self._a.state} {self._o.state}")
         self._o.state = not self._a.state
