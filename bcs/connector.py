@@ -34,9 +34,16 @@ class Connector(
 
     @typing.override
     def validate(self) -> None:
+        if self not in self.component.connectors:
+            raise self.ValidationError(
+                f"connector {self} not in component {self.component}"
+            )
+        for connection in self:
+            if self not in connection:
+                raise self.ValidationError(
+                    f"connector {self} not in connection {connection}"
+                )
         super().validate()
-        assert all(self in connection.connectors for connection in self.connections)
-        assert self in self.component.connectors
 
     @typing.override
     def _on_state_change(self, state: bool) -> None:
@@ -58,15 +65,8 @@ class Connector(
                     components.append(component)
         return components
 
-    @typing.overload
-    def connect(self, rhs: "connection_lib.Connection") -> None:
-        ...
-
-    @typing.overload
-    def connect(self, rhs: "Connector") -> None:
-        ...
-
-    def connect(self, rhs: "connection_lib.Connection|Connector") -> None:
+    @typing.override
+    def connect(self, rhs: conductor.Conductor) -> None:
         match rhs:
             case connection_lib.Connection():
                 if rhs not in self.connections:

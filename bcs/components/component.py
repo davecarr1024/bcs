@@ -15,8 +15,6 @@ class Component(
     _t: float = dataclasses.field(
         default=0,
         repr=False,
-        compare=False,
-        init=False,
     )
     _name: typing.Optional[str] = None
 
@@ -76,7 +74,7 @@ class Component(
         connector = connector_lib.Connector(component=self, name=name)
         return connector
 
-    def run_until_state(
+    def run_until_stable_with_state(
         self,
         *,
         max_t: float = 10,
@@ -88,16 +86,10 @@ class Component(
 
         try:
             return self.run_until(stable_at_state, max_t=max_t, dt=dt)
-        except Exception:
-            raise Exception(f"{self} failed to stabilize at state {state} in {max_t}s")
-
-    def connect(
-        self,
-        lhs_connector_name: str,
-        rhs: "Component",
-        rhs_connector_name: str,
-    ) -> None:
-        self[lhs_connector_name].connect_component(rhs, rhs_connector_name)
+        except self.RunTimeout:
+            raise self.RunTimeout(
+                f"{self} failed to stabilize at state {state} in {max_t}s"
+            )
 
 
 from .. import connector as connector_lib

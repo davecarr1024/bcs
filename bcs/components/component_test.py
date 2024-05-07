@@ -16,7 +16,7 @@ class ComponentTest(unittest.TestCase):
         a.connect(b)
         self.assertFalse(b.state)
         a.state = True
-        c.run_until_state(a=True, b=True)
+        c.run_until_stable_with_state(a=True, b=True)
 
     def test_pass_through_fail(self) -> None:
         c = component.Component()
@@ -26,7 +26,7 @@ class ComponentTest(unittest.TestCase):
         self.assertFalse(b.state)
         a.state = True
         with self.assertRaises(Exception):
-            c.run_until_state(a=True, b=False)
+            c.run_until_stable_with_state(a=True, b=False)
 
     def test_subcomponent(self) -> None:
         c = component.Component()

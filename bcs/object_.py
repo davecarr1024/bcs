@@ -5,13 +5,19 @@ import typing
 
 @dataclasses.dataclass(kw_only=True)
 class Object(abc.ABC):
+    class RunTimeout(Exception):
+        ...
+
+    class ValidationError(Exception):
+        ...
+
     def __post_init__(self) -> None:
         self.validate()
 
     def validate(self) -> None:
-        assert all(
-            self in object.connected_objects for object in self.connected_objects
-        )
+        for object in self.connected_objects:
+            if self not in object.connected_objects:
+                raise self.ValidationError(f"{self} not connected to neighbor {object}")
 
     @property
     @abc.abstractmethod
@@ -63,7 +69,7 @@ class Object(abc.ABC):
                 return t
             self.tick_all(t, dt)
             t += dt
-        raise Exception(f"{self} failed to satisfy condition {cond} in {max_t}s")
+        raise self.RunTimeout(f"{self} failed to satisfy condition {cond} in {max_t}s")
 
     def run_until_stable(
         self,
@@ -77,5 +83,5 @@ class Object(abc.ABC):
                 return self.is_stable
 
             return self.run_until(is_stable, max_t=max_t, dt=dt)
-        except Exception:
-            raise Exception(f"{self} failed to become stable in {max_t}s")
+        except self.RunTimeout:
+            raise self.RunTimeout(f"{self} failed to become stable in {max_t}s")
