@@ -8,6 +8,8 @@ class Component(
     object_.Object,
     typing.Mapping[str, "connector_lib.Connector"],
 ):
+    class Error(Exception): ...
+
     connectors: typing.MutableSequence["connector_lib.Connector"] = dataclasses.field(
         default_factory=list,
         repr=False,
@@ -39,6 +41,8 @@ class Component(
         return {connector.name: connector for connector in self.connectors}
 
     def connector(self, name: str) -> "connector_lib.Connector":
+        if name not in self.connectors_by_name:
+            raise self.Error(f'trying to get unknown connector {name} from {self}: connectors are {[','.join(self.keys())]}')
         return self.connectors_by_name[name]
 
     @classmethod
@@ -47,9 +51,13 @@ class Component(
 
     @typing.override
     def validate(self) -> None:
+        duplicates = {connector.name for connector in self.connectors if self.connectors.count(connector.name) > 1}
+        if duplicates:
+            raise self.ValidationError(f'component {self} has duplicate connectors {duplicates}')
+        for connector in self.values():
+            if connector.component is not self:
+                raise self.ValidationError(f'component {self} not connected to connector {connector}')
         super().validate()
-        assert len(self.connectors) == len(self.connectors_by_name)
-        assert all(connector.component == self for connector in self.connectors)
 
     @property
     @typing.override
@@ -71,6 +79,8 @@ class Component(
         )
 
     def add_connector(self, name: str) -> "connector_lib.Connector":
+        if name in self.keys():
+            raise self.Error(f'{self} creating duplicate connector {name}')
         connector = connector_lib.Connector(component=self, name=name)
         return connector
 
