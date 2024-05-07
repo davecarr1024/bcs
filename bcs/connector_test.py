@@ -43,5 +43,5 @@ class ConnectorTest(unittest.TestCase):
         connector.connect(connection)
         self.assertFalse(connection.state)
         connector.state = True
-        connection.run_until_state(True)
+        connection.run_until_stable_with_state(True)
         self.assertTrue(connection.state)

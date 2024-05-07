@@ -67,9 +67,37 @@ class Component(
     def is_stable(self) -> bool:
         return all(connector.is_stable for connector in self.connectors)
 
+    def is_stable_with_state(self, **state: bool) -> bool:
+        return all(
+            self[name].is_stable_with_state(value) for name, value in state.items()
+        )
+
     def add_connector(self, name: str) -> "connector_lib.Connector":
         connector = connector_lib.Connector(component=self, name=name)
         return connector
+
+    def run_until_state(
+        self,
+        *,
+        max_t: float = 10,
+        dt: float = 0.01,
+        **state: bool,
+    ) -> float:
+        def stable_at_state() -> bool:
+            return self.is_stable_with_state(**state)
+
+        try:
+            return self.run_until(stable_at_state, max_t=max_t, dt=dt)
+        except Exception:
+            raise Exception(f"{self} failed to stabilize at state {state} in {max_t}s")
+
+    def connect(
+        self,
+        lhs_connector_name: str,
+        rhs: "Component",
+        rhs_connector_name: str,
+    ) -> None:
+        self[lhs_connector_name].connect_component(rhs, rhs_connector_name)
 
 
 from .. import connector as connector_lib

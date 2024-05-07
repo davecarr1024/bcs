@@ -51,17 +51,24 @@ class Conductor(object_.Object):
     def is_stable(self) -> bool:
         return self.stable_time >= self._min_stable_time
 
-    @abc.abstractmethod
-    def _on_state_change(self, state: bool) -> None: ...
+    def is_stable_with_state(self, state: bool) -> bool:
+        return self.is_stable and self.state == state
 
-    def run_until_state(
+    @abc.abstractmethod
+    def _on_state_change(self, state: bool) -> None:
+        ...
+
+    def run_until_stable_with_state(
         self,
         state: bool,
         *,
         max_t: float = 10,
         dt: float = 0.01,
     ) -> float:
-        t = self.run_until_stable(max_t=max_t, dt=dt)
-        if self.state != state:
-            raise Exception(f"{self} failed to stabilze at state {state}")
-        return t
+        def stable_with_state():
+            return self.is_stable_with_state(state)
+
+        try:
+            return self.run_until(stable_with_state, max_t=max_t, dt=dt)
+        except Exception:
+            raise Exception(f"{self} failed to stabilze at state {state} in {max_t}s")

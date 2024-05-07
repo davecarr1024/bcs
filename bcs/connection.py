@@ -13,8 +13,7 @@ class Connection(
         default_factory=list,
         repr=False,
     )
-    update_time_limit: float = 0.01
-    _update_time_limit: float = dataclasses.field(init=False, repr=False)
+    update_time_limit: float = 0.1
     _update_time: float = dataclasses.field(init=False, repr=False, default=0)
 
     def __str__(self) -> str:

@@ -1,7 +1,6 @@
 import dataclasses
 import typing
 
-from .components import component as component_lib
 from . import conductor, object_
 
 
@@ -13,11 +12,11 @@ class Connector(
 ):
     name: str
     component: "component_lib.Component"
-    connections: typing.MutableSequence["connection_lib.Connection"] = (
-        dataclasses.field(
-            default_factory=list,
-            repr=False,
-        )
+    connections: typing.MutableSequence[
+        "connection_lib.Connection"
+    ] = dataclasses.field(
+        default_factory=list,
+        repr=False,
     )
 
     def __str__(self) -> str:
@@ -60,10 +59,12 @@ class Connector(
         return components
 
     @typing.overload
-    def connect(self, rhs: "connection_lib.Connection") -> None: ...
+    def connect(self, rhs: "connection_lib.Connection") -> None:
+        ...
 
     @typing.overload
-    def connect(self, rhs: "Connector") -> None: ...
+    def connect(self, rhs: "Connector") -> None:
+        ...
 
     def connect(self, rhs: "connection_lib.Connection|Connector") -> None:
         match rhs:
@@ -78,5 +79,11 @@ class Connector(
                 self.connect(connection)
                 connection.connect(rhs)
 
+    def connect_component(
+        self, rhs: "component_lib.Component", rhs_connector_name: str
+    ) -> None:
+        self.connect(rhs[rhs_connector_name])
+
 
 from . import connection as connection_lib
+from .components import component as component_lib

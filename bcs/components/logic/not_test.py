@@ -14,4 +14,4 @@ class NotTest(unittest.TestCase):
             with self.subTest(a=a, o=o):
                 c = not_.Not()
                 c["a"].state = a
-                c["o"].run_until_state(o)
+                c["o"].run_until_stable_with_state(o)
