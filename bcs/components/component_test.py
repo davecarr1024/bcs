@@ -58,7 +58,7 @@ class ComponentTest(unittest.TestCase):
             len(c.all_connected_objects),
             msg=f"{a.all_connected_objects} {c.all_connected_objects}",
         )
-        c.run_until_stable_with_state(a=True, b=True)
+        c.run_until_stable_with_states(a=True, b=True)
 
     def test_pass_through_fail(self) -> None:
         c = component.Component("c")
@@ -68,7 +68,7 @@ class ComponentTest(unittest.TestCase):
         self.assertFalse(b.state)
         a.state = True
         with self.assertRaises(Exception):
-            c.run_until_stable_with_state(a=True, b=False)
+            c.run_until_stable_with_states(a=True, b=False)
 
     def test_subcomponent(self) -> None:
         c = component.Component()
@@ -77,4 +77,4 @@ class ComponentTest(unittest.TestCase):
         b.connect(~a)
         a.state = True
         b.state = True
-        c.run_until_stable_with_state(a=True, b=False)
+        c.run_until_stable_with_states(a=True, b=False)

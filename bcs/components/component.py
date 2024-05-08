@@ -91,10 +91,11 @@ class Component(
     def state(self) -> typing.Mapping[str, bool]:
         return {name: connector.state for name, connector in self.items()}
 
-    def is_stable_with_state(self, **state: bool) -> bool:
-        return all(
-            self[name].is_stable_with_state(value) for name, value in state.items()
-        )
+    def is_stable_with_states(self, **states: bool) -> bool:
+        return self.is_stable and self.has_states(**states)
+
+    def has_states(self, **states: bool) -> bool:
+        return all(self[name].state == state for name, state in states.items())
 
     def add_connector(self, name: str) -> "connector_lib.Connector":
         if name in self.keys():
@@ -102,21 +103,38 @@ class Component(
         connector = connector_lib.Connector(component=self, name=name)
         return connector
 
-    def run_until_stable_with_state(
+    def run_until_stable_with_states(
         self,
         *,
-        max_t: float = 10,
-        dt: float = 0.01,
+        max_t: float = object_.MAX_T,
+        dt: float = object_.DT,
         **state: bool,
     ) -> float:
-        def stable_at_state() -> bool:
-            return self.is_stable_with_state(**state)
+        def stable_with_states() -> bool:
+            return self.is_stable_with_states(**state)
 
         try:
-            return self.run_until(stable_at_state, max_t=max_t, dt=dt)
+            return self.run_until(stable_with_states, max_t=max_t, dt=dt)
         except self.RunTimeout:
             raise self.RunTimeout(
-                f"{self} failed to stabilize at state {state} in {max_t}s - current state is {self.state}"
+                f"{self} failed to stabilize at states {state} in {max_t}s - current state is {self.state}"
+            )
+
+    def run_until_states(
+        self,
+        *,
+        max_t: float = object_.MAX_T,
+        dt: float = object_.DT,
+        **states: bool,
+    ) -> float:
+        def has_states() -> bool:
+            return self.has_states(**states)
+
+        try:
+            return self.run_until(has_states, max_t=max_t, dt=dt)
+        except self.RunTimeout:
+            raise self.RunTimeout(
+                f"{self} failed to stabilize at states {states} in {max_t}s - current state is {self.state}"
             )
 
 

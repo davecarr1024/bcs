@@ -1,6 +1,7 @@
 import abc
 import dataclasses
 import random
+from re import T
 import typing
 from . import object_
 
@@ -98,9 +99,7 @@ class Conductor(object_.Object):
 
     @state.setter
     def state(self, state: bool) -> None:
-        if (not self._propagation_active and state != self._state) or (
-            self._propagation_active and state != self._propagation_state
-        ):
+        if not self._propagation_active and state != self._state:
             self._propagation_active = True
             self._propagation_max_time = random.gauss(
                 self._propagation_mu, self._propagation_sigma
@@ -139,6 +138,21 @@ class Conductor(object_.Object):
             raise self.RunTimeout(
                 f"{self} failed to stabilze at state {state} in {max_t}s"
             )
+
+    def run_until_state(
+        self,
+        state: bool,
+        *,
+        max_t: float = object_.MAX_T,
+        dt: float = object_.DT,
+    ) -> float:
+        def has_state():
+            return self.state == state
+
+        try:
+            return self.run_until(has_state, max_t=max_t, dt=dt)
+        except self.RunTimeout:
+            raise self.RunTimeout(f"{self} failed to reach state {state} in {max_t}s")
 
     @abc.abstractmethod
     def connect(self, rhs: "Conductor") -> None: ...

@@ -122,7 +122,7 @@ class Object(abc.ABC):
     ) -> float:
         self.validate_all_if_enabled()
         t: float = 0
-        while t < max_t:
+        while t <= max_t:
             if cond():
                 return t
             self.tick_all(t, dt)
