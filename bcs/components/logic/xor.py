@@ -3,9 +3,10 @@ import typing
 from .. import component
 
 
-@dataclasses.dataclass(kw_only=True)
+@dataclasses.dataclass
 class Xor(component.Component):
     def __post_init__(self) -> None:
+        super().__post_init__()
         self.a = self.add_connector("a")
         self.b = self.add_connector("b")
         self.o = self.add_connector("o")

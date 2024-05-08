@@ -5,6 +5,13 @@ import bcs
 
 
 class ConnectionTest(unittest.TestCase):
+    def test_connect_connector(self) -> None:
+        a = bcs.Connector("a", bcs.components.Component("c"))
+        b = bcs.Connection()
+        a.connect(b)
+        a.state = True
+        b.run_until_stable_with_state(True)
+
     def test_connect_power(self) -> None:
         a = connection.Connection()
         a.connect_power()

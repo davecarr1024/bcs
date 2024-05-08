@@ -2,37 +2,43 @@ import dataclasses
 import typing
 from . import conductor, object_
 
-_id = 0
 
-
-@dataclasses.dataclass(kw_only=True)
+@dataclasses.dataclass
 class Connection(
     conductor.Conductor,
     typing.Sized,
     typing.Iterable["connector_lib.Connector"],
 ):
-    connectors: typing.MutableSequence["connector_lib.Connector"] = dataclasses.field(
+    _connectors: typing.Sequence["connector_lib.Connector"] = dataclasses.field(
         default_factory=list,
         repr=False,
+        compare=False,
+        init=False,
     )
-    update_time_limit: float = 0.1
-    _update_time: float = 0
-    _id: int = dataclasses.field(init=False)
-
-    def __post_init__(self) -> None:
-        global _id
-        self._id = _id
-        _id += 1
-        super().__post_init__()
 
     def __str__(self) -> str:
-        return f"[{','.join(map(str,self))}]"
+        return f"[{self.id}-{','.join(map(str,self))}]"
 
     def __len__(self) -> int:
         return len(self.connectors)
 
     def __iter__(self) -> typing.Iterator["connector_lib.Connector"]:
         return iter(self.connectors)
+
+    @typing.override
+    def _on_state_change(self, state: bool) -> None:
+        for connector in self:
+            connector.state = state
+
+    @property
+    def connectors(self) -> typing.Sequence["connector_lib.Connector"]:
+        return self._connectors
+
+    @connectors.setter
+    def connectors(
+        self, connectors: typing.Sequence["connector_lib.Connector"]
+    ) -> None:
+        self._connected_objects = self._connectors = connectors
 
     @typing.override
     def validate(self) -> None:
@@ -43,10 +49,6 @@ class Connection(
                 )
         super().validate()
 
-    @typing.override
-    def _on_state_change(self, state: bool) -> None:
-        self._update_time = 0
-
     @property
     def changing(self) -> bool:
         return any(connector.state != self.state for connector in self.connectors)
@@ -54,33 +56,23 @@ class Connection(
     @typing.override
     def tick(self, t: float, dt: float) -> None:
         super().tick(t, dt)
-        if self.changing:
-            self._update_time += dt
-            if self._update_time >= self.update_time_limit:
-                for connector in self.connectors:
-                    connector.state = self._state
-
-    @property
-    @typing.override
-    def connected_objects(self) -> typing.Iterable[object_.Object]:
-        return self.connectors
 
     @typing.override
     def connect(self, rhs: conductor.Conductor) -> None:
         match rhs:
             case Connection():
-                connector = connector_lib.Connector(
-                    name="a",
-                    component=component.Component(_name="buffer"),
-                )
-                self.connect(connector)
-                rhs.connect(connector)
+                with self._pause_validation():
+                    connector = connector_lib.Connector(
+                        name="a",
+                        component=component.Component(_name="buffer"),
+                    )
+                    self.connect(connector)
+                    rhs.connect(connector)
             case connector_lib.Connector():
                 if rhs not in self.connectors:
-                    self.connectors.append(rhs)
-                    rhs.connect(self)
-                    self.validate()
-                    rhs.validate()
+                    with self._pause_validation():
+                        self.connectors = list(self.connectors) + [rhs]
+                        rhs.connect(self)
 
 
 from . import connector as connector_lib
