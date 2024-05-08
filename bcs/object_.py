@@ -4,7 +4,7 @@ import dataclasses
 import typing
 
 MAX_T: float = 10
-DT: float = 0.0001
+DT: float = 0.001
 _id: int = 0
 
 

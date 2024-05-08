@@ -7,7 +7,7 @@ from . import object_
 
 MIN_STABLE_TIME: float = 0.5
 PROPAGATION_MU: float = 0.01
-PROPAGATION_SIGMA: float = 0.001
+PROPAGATION_SIGMA: float = 0.005
 
 
 # Abstract conductor with state, connections, and propagation delay.
