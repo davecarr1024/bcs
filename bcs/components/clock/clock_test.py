@@ -6,7 +6,7 @@ import bcs
 
 class ClockTest(unittest.TestCase):
     def test_disabled(self) -> None:
-        clk = bcs.components.power.Clock()
+        clk = bcs.components.clock.Clock()
         clk.enable.state = False
         clk.update()
         self.assertFalse(clk.output.state)
@@ -16,7 +16,7 @@ class ClockTest(unittest.TestCase):
         self.assertFalse(clk.output.state)
 
     def test_enabled(self) -> None:
-        clk = bcs.components.power.Clock()
+        clk = bcs.components.clock.Clock()
         clk.enable.state = True
         clk.update()
         self.assertFalse(clk.output.state)
@@ -41,7 +41,7 @@ class ClockTest(unittest.TestCase):
                     self.clk_states.append(clk_state)
 
         pulse_recorder = PulseRecorder()
-        clk = bcs.components.power.Clock()
+        clk = bcs.components.clock.Clock()
         clk.output.connect(pulse_recorder.clk)
         clk.pulse()
         self.assertSequenceEqual(pulse_recorder.clk_states[-2:], [True, False])
