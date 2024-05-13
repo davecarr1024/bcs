@@ -33,6 +33,21 @@ class Pin(object_.Object, typing.Sized, typing.Iterable["Pin"]):
     def __str__(self) -> str:
         return f"{self.component}.{self.name}"
 
+    def __and__(self, pin: "Pin") -> "Pin":
+        return logic.And(frozenset({self, pin})).output
+
+    def __or__(self, pin: "Pin") -> "Pin":
+        return logic.Or(frozenset({self, pin})).output
+
+    def __xor__(self, pin: "Pin") -> "Pin":
+        return logic.Xor(frozenset({self, pin})).output
+
+    def __invert__(self) -> "Pin":
+        return logic.Not(self).output
+
+    def nand(self, pin: "Pin") -> "Pin":
+        return logic.Nand(frozenset({self, pin})).output
+
     @typing.override
     def validate(self) -> None:
         if self.name not in self.component or self.component[self.name] is not self:
@@ -144,4 +159,4 @@ class Pin(object_.Object, typing.Sized, typing.Iterable["Pin"]):
             self.connect(power.Ground().output)
 
 
-from .components import component, power
+from .components import component, power, logic
