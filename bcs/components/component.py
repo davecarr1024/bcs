@@ -110,5 +110,10 @@ class Component(object_.Object, typing.Mapping[str, "pin.Pin"]):
                 self[name].state = state
             self.update()
 
+    def print_all_states(self, prefix: str = "", indent: int = 0) -> None:
+        print(f"{indent*'  '}{prefix}{self} {self.states}")
+        for child in self.children:
+            child.print_all_states("", indent + 1)
+
 
 from .. import pin

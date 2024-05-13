@@ -16,6 +16,7 @@ class Pin(object_.Object, typing.Sized, typing.Iterable["Pin"]):
         self.__connected_pins: frozenset[Pin] = frozenset()
         self.__all_connected_pins: frozenset[Pin] | None = frozenset({self})
         self.__state: bool = False
+        self.__state_unset: bool = True
         if self.name in self.component:
             raise self.Error(
                 f"pin {self.name} has duplicate name in component {self.component} with pins {list(self.component)}"
@@ -31,31 +32,31 @@ class Pin(object_.Object, typing.Sized, typing.Iterable["Pin"]):
         return iter(self.connected_pins)
 
     def __str__(self) -> str:
-        return f"{self.component}.{self.name}"
+        return f"{self.component}.{self.name}({[f'{child.component}.{child.name}' for child in self.connected_pins]})"
 
     def __and__(self, pin: "Pin") -> "Pin":
         return self.and_(self, pin)
 
     def and_(self, *pins: "Pin") -> "Pin":
-        return logic.And(frozenset([self] + list(pins))).output
+        return logic.And(None, None, self, *pins).output
 
     def __or__(self, pin: "Pin") -> "Pin":
         return self.or_(self, pin)
 
     def or_(self, *pins: "Pin") -> "Pin":
-        return logic.Or(frozenset([self] + list(pins))).output
+        return logic.Or(None, None, self, *pins).output
 
     def __xor__(self, pin: "Pin") -> "Pin":
         return self.xor_(self, pin)
 
     def xor_(self, *pins: "Pin") -> "Pin":
-        return logic.Xor(frozenset([self] + list(pins))).output
+        return logic.Xor(None, None, self, *pins).output
 
     def __invert__(self) -> "Pin":
         return logic.Not(self).output
 
     def nand(self, *pins: "Pin") -> "Pin":
-        return logic.Nand(frozenset([self] + list(pins))).output
+        return logic.Nand(None, None, self, *pins).output
 
     @typing.override
     def validate(self) -> None:
@@ -104,7 +105,11 @@ class Pin(object_.Object, typing.Sized, typing.Iterable["Pin"]):
 
     @state.setter
     def state(self, state: bool) -> None:
-        if state != self.__state:
+        if state != self.__state or self.__state_unset:
+            self.__state_unset = False
+            print(
+                f"pin {self} set state to {state} - component {self.component} state is now {self.component.states}"
+            )
             self.__state = state
             for pin in self:
                 pin.state = state
