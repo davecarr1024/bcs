@@ -1,4 +1,3 @@
-import dataclasses
 import typing
 import unittest
 
@@ -6,82 +5,90 @@ import bcs
 
 
 class ObjectTest(unittest.TestCase):
-    @dataclasses.dataclass(repr=False)
-    class _Object(bcs.Object):
-        name: str
-        _neighbors: typing.Sequence["ObjectTest._Object"] = dataclasses.field(
-            init=False,
-            default_factory=list,
-            compare=False,
-            repr=False,
-        )
-
-        def __str__(self) -> str:
-            return repr(self)
+    class Object(bcs.Object):
+        def __init__(
+            self,
+            name: str,
+            neighbors: frozenset["ObjectTest.Object"] | None = None,
+        ) -> None:
+            self.name = name
+            self.__neighbors: frozenset["ObjectTest.Object"] = neighbors or frozenset()
+            super().__init__()
 
         def __repr__(self) -> str:
-            return (
-                f"{self.name}({','.join(neighbor.name for neighbor in self.neighbors)})"
-            )
+            return self.name
+
+        @property
+        def neighbors(self) -> frozenset["ObjectTest.Object"]:
+            return self._neighbors
+
+        @property
+        def _neighbors(self) -> frozenset["ObjectTest.Object"]:
+            return self.__neighbors
+
+        @_neighbors.setter
+        def _neighbors(self, _neighbors: frozenset["ObjectTest.Object"]) -> None:
+            self._connected_objects = self.__neighbors = _neighbors
 
         @typing.override
         def validate(self) -> None:
-            if len(self.neighbors) != len(self._connected_objects):
-                raise self.ValidationError(
-                    f"neighbors {self.neighbors} != connected_objects {self._connected_objects}"
-                )
-            for neighbor in self.neighbors:
-                if self not in neighbor.neighbors:
-                    raise self.ValidationError(
-                        f"neighbor {neighbor} doesn't contain object {self}"
-                    )
+            for neighbor in self.__neighbors:
+                if self not in neighbor.__neighbors:
+                    raise self.ValidationError(f"{self} not in neighbor {neighbor}")
             super().validate()
 
-        @typing.override
-        def tick(self, t: float, dt: float) -> None: ...
-
-        @property
-        @typing.override
-        def is_stable(self) -> bool:
-            return True
-
-        @property
-        def neighbors(self) -> typing.Sequence["ObjectTest._Object"]:
-            return self._neighbors
-
-        @neighbors.setter
-        def neighbors(self, neighbors: typing.Sequence["ObjectTest._Object"]) -> None:
-            self._connected_objects = self._neighbors = neighbors
-
-        def connect(self, neighbor: "ObjectTest._Object") -> None:
-            if neighbor not in self._neighbors:
+        def connect(self, neighbor: "ObjectTest.Object") -> None:
+            if neighbor not in self.__neighbors:
                 with self._pause_validation():
-                    self.neighbors = list(self.neighbors) + [neighbor]
+                    self._neighbors |= {neighbor}
                     neighbor.connect(self)
 
+        def disconnect(self, neighbor: "ObjectTest.Object") -> None:
+            if neighbor in self.__neighbors:
+                with self._pause_validation():
+                    self._neighbors -= {neighbor}
+                    neighbor.disconnect(self)
+
     def test_empty(self) -> None:
-        a = self._Object("a")
-        self.assertCountEqual(a.neighbors, [])
-        self.assertCountEqual(a.all_connected_objects, [a])
+        self.Object("a")
 
-    def test_neighbor(self) -> None:
-        a = self._Object("a")
-        b = self._Object("b")
+    def test_invalid_disconnected_neighbor(self) -> None:
+        with self.assertRaises(self.Object.ValidationError):
+            self.Object("a", frozenset({self.Object("b")})).validate()
+
+    def test_connect(self) -> None:
+        a = self.Object("a")
+        b = self.Object("b")
         a.connect(b)
-        self.assertCountEqual(a.neighbors, [b])
-        self.assertCountEqual(b.neighbors, [a])
-        self.assertCountEqual(a.all_connected_objects, [a, b])
-        self.assertCountEqual(b.all_connected_objects, [a, b])
+        self.assertSetEqual(a.neighbors, {b})
+        self.assertSetEqual(b.neighbors, {a})
+        self.assertSetEqual(a.all_connected_objects, {a, b})
+        self.assertSetEqual(b.all_connected_objects, {a, b})
 
-    def test_network(self) -> None:
-        a = self._Object("a")
-        b = self._Object("b")
-        c = self._Object("c")
+    def test_connect_multiple(self) -> None:
+        a = self.Object("a")
+        b = self.Object("b")
+        c = self.Object("c")
         a.connect(b)
         b.connect(c)
-        self.assertCountEqual(a.neighbors, [b])
-        self.assertCountEqual(b.neighbors, [a, c])
-        self.assertCountEqual(c.neighbors, [b])
-        self.assertCountEqual(a.all_connected_objects, [a, b, c])
-        self.assertCountEqual(b.all_connected_objects, [a, b, c])
-        self.assertCountEqual(c.all_connected_objects, [a, b, c])
+        self.assertSetEqual(a.neighbors, {b})
+        self.assertSetEqual(b.neighbors, {a, c})
+        self.assertSetEqual(c.neighbors, {b})
+        self.assertSetEqual(a.all_connected_objects, {a, b, c})
+        self.assertSetEqual(b.all_connected_objects, {a, b, c})
+        self.assertSetEqual(c.all_connected_objects, {a, b, c})
+
+    def test_disconnect(self) -> None:
+        a = self.Object("a")
+        b = self.Object("b")
+        a.connect(b)
+        self.assertSetEqual(a.neighbors, {b})
+        self.assertSetEqual(b.neighbors, {a})
+        self.assertSetEqual(a.all_connected_objects, {a, b})
+        self.assertSetEqual(b.all_connected_objects, {a, b})
+
+        a.disconnect(b)
+        self.assertSetEqual(a.neighbors, frozenset())
+        self.assertSetEqual(b.neighbors, frozenset())
+        self.assertSetEqual(a.all_connected_objects, {a})
+        self.assertSetEqual(b.all_connected_objects, {b})
