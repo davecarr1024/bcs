@@ -5,16 +5,16 @@ import bcs
 
 class ComponentTest(unittest.TestCase):
     def test_empty(self) -> None:
-        bcs.Component()
+        bcs.components.Component()
 
     def test_no_name(self) -> None:
-        self.assertEqual(bcs.Component().name, "Component")
+        self.assertEqual(bcs.components.Component().name, "Component")
 
     def test_name(self) -> None:
-        self.assertEqual(bcs.Component("c").name, "c")
+        self.assertEqual(bcs.components.Component("c").name, "c")
 
     def test_add_pin(self) -> None:
-        c = bcs.Component("c")
+        c = bcs.components.Component("c")
         a = c.add_pin("a")
         self.assertIs(a.component, c)
         self.assertDictEqual(dict(c), {"a": a})

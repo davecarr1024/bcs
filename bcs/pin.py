@@ -68,7 +68,7 @@ class Pin(object_.Object, typing.Sized, typing.Iterable["Pin"]):
                 pin = pending.pop()
                 if pin not in traversed:
                     traversed.add(pin)
-                    pending |= pin._connected_pins
+                    pending |= pin.connected_pins
             self.__all_connected_pins = frozenset(traversed)
         return self.__all_connected_pins
 
@@ -82,7 +82,7 @@ class Pin(object_.Object, typing.Sized, typing.Iterable["Pin"]):
             self.__state = state
             for pin in self:
                 pin.state = state
-            self.component._on_pin_update()
+            self.component.update()
 
     def connect(self, pin: "Pin") -> None:
         if pin not in self._connected_pins:
@@ -99,5 +99,13 @@ class Pin(object_.Object, typing.Sized, typing.Iterable["Pin"]):
     def is_connected(self, pin: "Pin") -> bool:
         return pin in self.all_connected_pins
 
+    def connect_power(self) -> None:
+        self.disconnect(ground_.output)
+        self.connect(power_.output)
 
-from . import component
+    def connect_ground(self) -> None:
+        self.disconnect(power_.output)
+        self.connect(ground_.output)
+
+
+from .components import component, power_, ground_

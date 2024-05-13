@@ -1,5 +1,5 @@
 import typing
-from . import object_
+from .. import object_
 
 
 class Component(object_.Object, typing.Mapping[str, "pin.Pin"]):
@@ -73,7 +73,5 @@ class Component(object_.Object, typing.Mapping[str, "pin.Pin"]):
         for name, state in states.items():
             self[name].state = state
 
-    def _on_pin_update(self) -> None: ...
 
-
-from . import pin
+from .. import pin

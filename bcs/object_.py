@@ -75,3 +75,9 @@ class Object:
         finally:
             self.__pause_validation_count -= 1
             self.validate_all()
+
+    def update(self) -> None: ...
+
+    def update_all(self) -> None:
+        for object in self.all_connected_objects:
+            object.update()
