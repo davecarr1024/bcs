@@ -1,6 +1,8 @@
 import typing
 from . import object_
 
+_ComponentType = typing.TypeVar("_ComponentType", bound="component.Component")
+
 
 class Pin(object_.Object, typing.Sized, typing.Iterable["Pin"]):
     def __init__(
@@ -99,13 +101,47 @@ class Pin(object_.Object, typing.Sized, typing.Iterable["Pin"]):
     def is_connected(self, pin: "Pin") -> bool:
         return pin in self.all_connected_pins
 
-    def connect_power(self) -> None:
-        self.disconnect(ground_.output)
-        self.connect(power_.output)
+    @property
+    def all_connected_components(self) -> frozenset["component.Component"]:
+        return frozenset(pin.component for pin in self.all_connected_pins)
 
-    def connect_ground(self) -> None:
-        self.disconnect(power_.output)
-        self.connect(ground_.output)
+    def all_connected_components_of_type(
+        self, type: typing.Type[_ComponentType]
+    ) -> frozenset[_ComponentType]:
+        components: set[_ComponentType] = set()
+        for component in self.all_connected_components:
+            if isinstance(component, type):
+                components.add(component)
+        return frozenset(components)
+
+    def is_connected_to_component_of_type(
+        self, type: typing.Type["component.Component"]
+    ) -> bool:
+        return bool(self.all_connected_components_of_type(type))
+
+    @property
+    def is_connected_to_power(self) -> bool:
+        return self.is_connected_to_component_of_type(power.Power)
+
+    def connect_to_power(self) -> None:
+        if not self.is_connected_to_power:
+            if self.is_connected_to_ground:
+                raise self.ValidationError(
+                    f"connecting {self} to power but already connected to ground"
+                )
+            self.connect(power.Power().output)
+
+    @property
+    def is_connected_to_ground(self) -> bool:
+        return self.is_connected_to_component_of_type(power.Ground)
+
+    def connect_to_ground(self) -> None:
+        if not self.is_connected_to_ground:
+            if self.is_connected_to_power:
+                raise self.ValidationError(
+                    f"connecting {self} to ground but already connected to power"
+                )
+            self.connect(power.Ground().output)
 
 
-from .components import component, power_, ground_
+from .components import component, power

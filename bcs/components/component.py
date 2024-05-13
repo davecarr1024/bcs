@@ -70,8 +70,10 @@ class Component(object_.Object, typing.Mapping[str, "pin.Pin"]):
 
     @states.setter
     def states(self, states: typing.Mapping[str, bool]) -> None:
-        for name, state in states.items():
-            self[name].state = state
+        if any(self[name].state != state for name, state in states.items()):
+            for name, state in states.items():
+                self[name].state = state
+            self.update()
 
 
 from .. import pin

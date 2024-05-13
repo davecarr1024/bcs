@@ -33,6 +33,22 @@ class PinTest(unittest.TestCase):
         self.assertSetEqual(a.all_connected_objects, {a, b, c})
         self.assertSetEqual(b.all_connected_objects, {a, b, c})
         self.assertSetEqual(c.all_connected_objects, {a, b, c})
+        self.assertSetEqual(a.all_connected_components, {c})
+        self.assertSetEqual(b.all_connected_components, {c})
+
+    def test_all_connected_components(self) -> None:
+        c1 = bcs.components.Component("c1")
+        c2 = bcs.components.Component("c2")
+        a = bcs.Pin("a", c1)
+        b = bcs.Pin("b", c2)
+        self.assertSetEqual(a.all_connected_components, {c1})
+        self.assertSetEqual(b.all_connected_components, {c2})
+        a.connect(b)
+        self.assertSetEqual(a.all_connected_components, {c1, c2})
+        self.assertSetEqual(b.all_connected_components, {c1, c2})
+        a.disconnect(b)
+        self.assertSetEqual(a.all_connected_components, {c1})
+        self.assertSetEqual(b.all_connected_components, {c2})
 
     def test_disconnect(self) -> None:
         c = bcs.components.Component("c")
@@ -72,38 +88,28 @@ class PinTest(unittest.TestCase):
         a.state = False
         self.assertFalse(c.state)
 
-    def test_connect_power(self) -> None:
+    def test_connect_to_power(self) -> None:
         a = bcs.Pin("a", bcs.components.Component())
-        a.connect_power()
+        a.connect_to_power()
         a.state = False
         a.update_all()
         self.assertTrue(a.state)
 
-    def test_connect_ground(self) -> None:
+    def test_connect_to_ground(self) -> None:
         a = bcs.Pin("a", bcs.components.Component())
-        a.connect_ground()
+        a.connect_to_ground()
         a.state = True
         a.update_all()
         self.assertFalse(a.state)
 
-    def test_connect_power_disconnects_ground(self) -> None:
+    def test_short_power(self) -> None:
         a = bcs.Pin("a", bcs.components.Component())
-        self.assertNotIn(bcs.components.power_.output, a)
-        self.assertNotIn(bcs.components.ground_.output, a)
-        a.connect_ground()
-        self.assertNotIn(bcs.components.power_.output, a)
-        self.assertIn(bcs.components.ground_.output, a)
-        a.connect_power()
-        self.assertIn(bcs.components.power_.output, a)
-        self.assertNotIn(bcs.components.ground_.output, a)
+        a.connect_to_power()
+        with self.assertRaises(a.ValidationError):
+            a.connect_to_ground()
 
-    def test_connect_ground_disconnects_power(self) -> None:
+    def test_short_ground(self) -> None:
         a = bcs.Pin("a", bcs.components.Component())
-        self.assertNotIn(bcs.components.power_.output, a)
-        self.assertNotIn(bcs.components.ground_.output, a)
-        a.connect_power()
-        self.assertIn(bcs.components.power_.output, a)
-        self.assertNotIn(bcs.components.ground_.output, a)
-        a.connect_ground()
-        self.assertNotIn(bcs.components.power_.output, a)
-        self.assertIn(bcs.components.ground_.output, a)
+        a.connect_to_ground()
+        with self.assertRaises(a.ValidationError):
+            a.connect_to_power()
