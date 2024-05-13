@@ -34,19 +34,28 @@ class Pin(object_.Object, typing.Sized, typing.Iterable["Pin"]):
         return f"{self.component}.{self.name}"
 
     def __and__(self, pin: "Pin") -> "Pin":
-        return logic.And(frozenset({self, pin})).output
+        return self.and_(self, pin)
+
+    def and_(self, *pins: "Pin") -> "Pin":
+        return logic.And(frozenset([self] + list(pins))).output
 
     def __or__(self, pin: "Pin") -> "Pin":
-        return logic.Or(frozenset({self, pin})).output
+        return self.or_(self, pin)
+
+    def or_(self, *pins: "Pin") -> "Pin":
+        return logic.Or(frozenset([self] + list(pins))).output
 
     def __xor__(self, pin: "Pin") -> "Pin":
-        return logic.Xor(frozenset({self, pin})).output
+        return self.xor_(self, pin)
+
+    def xor_(self, *pins: "Pin") -> "Pin":
+        return logic.Xor(frozenset([self] + list(pins))).output
 
     def __invert__(self) -> "Pin":
         return logic.Not(self).output
 
-    def nand(self, pin: "Pin") -> "Pin":
-        return logic.Nand(frozenset({self, pin})).output
+    def nand(self, *pins: "Pin") -> "Pin":
+        return logic.Nand(frozenset([self] + list(pins))).output
 
     @typing.override
     def validate(self) -> None:
