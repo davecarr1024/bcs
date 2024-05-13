@@ -5,10 +5,22 @@ from .. import object_
 class Component(object_.Object, typing.Mapping[str, "pin.Pin"]):
     class PinKeyError(KeyError): ...
 
-    def __init__(self, name: str | None = None) -> None:
+    def __init__(
+        self,
+        name: str | None = None,
+        parent: typing.Optional["Component"] = None,
+    ) -> None:
         super().__init__()
         self.__pins: typing.Mapping[str, pin.Pin] = {}
         self._name = name
+        self.__parent = parent
+        self.__children: frozenset[Component] = frozenset()
+        if self.__parent is not None:
+            with self._pause_validation():
+                with self.__parent._pause_validation():
+                    self.__parent.__children |= frozenset({self})
+                    self._connected_objects |= {self.__parent}
+                    self.__parent._connected_objects |= frozenset({self})
 
     def __len__(self) -> int:
         return len(self.pins)
@@ -20,7 +32,15 @@ class Component(object_.Object, typing.Mapping[str, "pin.Pin"]):
         return self.pin(name)
 
     def __str__(self) -> str:
-        return self.name
+        return self.path
+
+    @property
+    def parent(self) -> typing.Optional["Component"]:
+        return self.__parent
+
+    @property
+    def children(self) -> frozenset["Component"]:
+        return self.__children
 
     @classmethod
     def type(cls) -> str:
@@ -30,12 +50,26 @@ class Component(object_.Object, typing.Mapping[str, "pin.Pin"]):
     def name(self) -> str:
         return self._name or self.type()
 
+    @property
+    def path(self) -> str:
+        if self.parent is not None:
+            return f"{self.parent.path}.{self.name}"
+        else:
+            return self.name
+
     @typing.override
     def validate(self) -> None:
         for pin in self.values():
             if pin.component is not self:
                 raise self.ValidationError(
-                    f"pin {self} not connected to component {self}"
+                    f"pin {pin} not connected to component {self}"
+                )
+        if self.parent is not None and self not in self.parent.children:
+            raise self.ValidationError(f"component {self} not in parent {self.parent}")
+        for child in self.children:
+            if self is not child.parent:
+                raise self.ValidationError(
+                    f"component {self} is not connected to child {child}"
                 )
         super().validate()
 
@@ -46,8 +80,9 @@ class Component(object_.Object, typing.Mapping[str, "pin.Pin"]):
     @_pins.setter
     def _pins(self, _pins: typing.Mapping[str, "pin.Pin"]) -> None:
         with self._pause_validation():
+            self._connected_objects -= frozenset(self.__pins.values())
             self.__pins = _pins
-            self._connected_objects = frozenset(_pins.values())
+            self._connected_objects |= frozenset(self.__pins.values())
 
     @property
     def pins(self) -> typing.Mapping[str, "pin.Pin"]:
