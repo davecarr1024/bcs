@@ -9,21 +9,21 @@ class SRLatch(component.Component):
     ) -> None:
         super().__init__(name=name, parent=parent)
 
-        self.s = self.add_pin("s")
-        self.r = self.add_pin("r")
+        self.s_inverse = self.add_pin("s_inverse")
+        self.r_inverse = self.add_pin("r_inverse")
         self.q = self.add_pin("q")
         self.q_inverse = self.add_pin("q_inverse")
         s_nand = logic.Nand(
             "s_nand",
             self,
-            logic.Not(self.s, "s_not", self).output,
+            self.s_inverse,
             self.q_inverse,
         )
         s_nand.output.connect(self.q)
         r_nand = logic.Nand(
             "r_nand",
             self,
-            logic.Not(self.r, "r_not", self).output,
+            self.r_inverse,
             self.q,
         )
         r_nand.output.connect(self.q_inverse)

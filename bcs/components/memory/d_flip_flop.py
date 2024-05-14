@@ -1,8 +1,7 @@
-from . import sr_latch
 from .. import component, logic, clock
 
 
-class SRFlipFLop(component.Component):
+class DFlipFlop(component.Component):
     def __init__(
         self,
         name: str | None = None,
@@ -10,24 +9,27 @@ class SRFlipFLop(component.Component):
     ) -> None:
         super().__init__(name, parent)
 
-        self.s = self.add_pin("s")
-        self.r = self.add_pin("r")
+        self.d = self.add_pin("d")
+        self.enable = self.add_pin("enable")
         self.clk = self.add_pin("clk")
         self.q = self.add_pin("q")
         self.q_inverse = self.add_pin("q_inverse")
 
-        clk_edge = clock.EdgeDetector(self.clk, "clk_edge", self)
+        s = self.d
+        r = logic.Not(self.d, "d_not", self).output
+        clk_edge = clock.EdgeDetector(self.clk, "clk_edge", self).output
+        write = logic.And("write_and", self, clk_edge, self.enable).output
         s_nand = logic.Nand(
             "s_nand",
             self,
-            self.s,
-            clk_edge.output,
+            s,
+            write,
         )
         r_nand = logic.Nand(
             "r_nand",
             self,
-            self.r,
-            clk_edge.output,
+            r,
+            write,
         )
         q_nand = logic.Nand(
             "q_nand",
