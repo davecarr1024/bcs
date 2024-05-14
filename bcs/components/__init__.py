@@ -1,2 +1,2 @@
 from .component import Component
-from . import clock, logic, memory, power
+from . import bus, clock, logic, memory, power

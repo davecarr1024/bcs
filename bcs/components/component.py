@@ -2,7 +2,7 @@ import typing
 from .. import object_
 
 
-class Component(object_.Object, typing.Mapping[str, "pin.Pin"]):
+class Component(object_.Object, typing.Mapping[str, "pin_lib.Pin"]):
     class PinKeyError(KeyError): ...
 
     def __init__(
@@ -11,7 +11,7 @@ class Component(object_.Object, typing.Mapping[str, "pin.Pin"]):
         parent: typing.Optional["Component"] = None,
     ) -> None:
         super().__init__()
-        self.__pins: typing.Mapping[str, pin.Pin] = {}
+        self.__pins: typing.Mapping[str, pin_lib.Pin] = {}
         self._name = name
         self.__parent = parent
         self.__children: frozenset[Component] = frozenset()
@@ -28,7 +28,7 @@ class Component(object_.Object, typing.Mapping[str, "pin.Pin"]):
     def __iter__(self) -> typing.Iterator[str]:
         return iter(self.pins)
 
-    def __getitem__(self, name: str) -> "pin.Pin":
+    def __getitem__(self, name: str) -> "pin_lib.Pin":
         return self.pin(name)
 
     def __str__(self) -> str:
@@ -80,30 +80,30 @@ class Component(object_.Object, typing.Mapping[str, "pin.Pin"]):
         super().validate()
 
     @property
-    def _pins(self) -> typing.Mapping[str, "pin.Pin"]:
+    def _pins(self) -> typing.Mapping[str, "pin_lib.Pin"]:
         return self.__pins
 
     @_pins.setter
-    def _pins(self, _pins: typing.Mapping[str, "pin.Pin"]) -> None:
+    def _pins(self, _pins: typing.Mapping[str, "pin_lib.Pin"]) -> None:
         with self._pause_validation():
             self._connected_objects -= frozenset(self.__pins.values())
             self.__pins = _pins
             self._connected_objects |= frozenset(self.__pins.values())
 
     @property
-    def pins(self) -> typing.Mapping[str, "pin.Pin"]:
+    def pins(self) -> typing.Mapping[str, "pin_lib.Pin"]:
         return self._pins
 
-    def pin(self, name: str) -> "pin.Pin":
+    def pin(self, name: str) -> "pin_lib.Pin":
         if name not in self.pins:
             raise self.PinKeyError(
                 f"unknown pin {name} in component {self} with pins {list(self)}"
             )
         return self.pins[name]
 
-    def add_pin(self, name: str) -> "pin.Pin":
+    def add_pin(self, name: str) -> "pin_lib.Pin":
         with self._pause_validation():
-            return pin.Pin(name, self)
+            return pin_lib.Pin(name, self)
 
     @property
     def states(self) -> typing.Mapping[str, bool]:
@@ -122,4 +122,4 @@ class Component(object_.Object, typing.Mapping[str, "pin.Pin"]):
             child.print_all_states("", indent + 1)
 
 
-from .. import pin
+from .. import pin as pin_lib

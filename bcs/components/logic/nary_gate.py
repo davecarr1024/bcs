@@ -21,7 +21,8 @@ class NaryGate(component.Component, abc.ABC):
         self.output = self.add_pin("output")
 
     @abc.abstractmethod
-    def _get_output(self, states: frozenset[bool]) -> bool: ...
+    def _get_output(self, states: frozenset[bool]) -> bool:
+        ...
 
     @typing.override
     def update(self) -> None:

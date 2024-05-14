@@ -3,9 +3,11 @@ import typing
 
 
 class Object:
-    class Error(Exception): ...
+    class Error(Exception):
+        ...
 
-    class ValidationError(Error): ...
+    class ValidationError(Error):
+        ...
 
     def __init__(self) -> None:
         self.__connected_objects: frozenset[Object] = frozenset()
@@ -76,7 +78,8 @@ class Object:
             self.__pause_validation_count -= 1
             self.validate_all()
 
-    def update(self) -> None: ...
+    def update(self) -> None:
+        ...
 
     def update_all(self) -> None:
         for object in self.all_connected_objects:
