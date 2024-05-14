@@ -4,8 +4,12 @@ from .. import component
 
 
 class Clock(component.Component):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(
+        self,
+        name: str | None = None,
+        parent: component.Component | None = None,
+    ) -> None:
+        super().__init__(name, parent)
         self.enable = self.add_pin("enable")
         self.output = self.add_pin("output")
         self.__pause_update_count = 0
