@@ -107,10 +107,10 @@ class Pin(object_.Object, typing.Sized, typing.Iterable["Pin"]):
     def state(self, state: bool) -> None:
         if state != self.__state or self.__state_unset:
             self.__state_unset = False
-            print(
-                f"pin {self} set state to {state} - component {self.component} state is now {self.component.states}"
-            )
             self.__state = state
+            # print(
+            #     f"pin {self} set state to {state} - component {self.component} state is now {self.component.states}"
+            # )
             for pin in self:
                 pin.state = state
             self.component.update()

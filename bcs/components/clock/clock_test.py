@@ -36,7 +36,6 @@ class ClockTest(unittest.TestCase):
 
             def update(self) -> None:
                 clk_state = self.clk.state
-                print(f"got clk_state {clk_state}")
                 if not self.clk_states or self.clk_states[-1] != clk_state:
                     self.clk_states.append(clk_state)
 

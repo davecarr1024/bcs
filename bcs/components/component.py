@@ -34,6 +34,12 @@ class Component(object_.Object, typing.Mapping[str, "pin.Pin"]):
     def __str__(self) -> str:
         return self.path
 
+    def _repr(self, indent: int) -> str:
+        return f"\n{'  '*indent}{self.path} {self.states}{''.join(child._repr(indent+1) for child in self.children)}"
+
+    def __repr__(self) -> str:
+        return self._repr(0)
+
     @property
     def parent(self) -> typing.Optional["Component"]:
         return self.__parent

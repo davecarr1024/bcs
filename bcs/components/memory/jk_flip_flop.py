@@ -15,8 +15,7 @@ class JKFlipFlop(component.Component):
         self.q = self.add_pin("q")
         self.q_inverse = self.add_pin("q_inverse")
 
-        clk_edge = clock.EdgeDetector("clk_edge", self)
-        clk_edge.input.connect(self.clk)
+        clk_edge = clock.EdgeDetector(self.clk, "clk_edge", self)
         j_nand = logic.Nand(
             "j_nand",
             self,
