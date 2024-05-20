@@ -31,9 +31,7 @@ class Register(component.Component):
         self._data_mode = self.DataMode.IDLE
 
     def __str__(self) -> str:
-        return (
-            f"Register(name={self.name},value={self.value},data_mode={self._data_mode})"
-        )
+        return f"Register({self.name}={self.value})"
 
     @property
     def value(self) -> byte.Byte:
@@ -62,9 +60,9 @@ class Register(component.Component):
     def _read_or_write(self) -> None:
         match self.data_mode:
             case self.DataMode.READ:
-                self.read()
+                self._read()
             case self.DataMode.WRITE:
-                self.write()
+                self._write()
 
     @typing.override
     def apply(self, action: component.Component.Action) -> None:
@@ -74,8 +72,8 @@ class Register(component.Component):
             case _:
                 super().apply(action)
 
-    def read(self) -> None:
+    def _read(self) -> None:
         self._value = self.bus.value
 
-    def write(self) -> None:
+    def _write(self) -> None:
         self.bus.value = self._value

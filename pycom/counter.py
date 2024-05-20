@@ -28,18 +28,15 @@ class Counter(register.Register):
         super().__init__(bus, name)
         self.counter_mode = self.CounterMode.DISABLED
 
-    def __str__(self) -> str:
-        return f"Counter(name={self.name},value={self.value},data_mode={self.data_mode},counter_mode={self.counter_mode})"
-
     @typing.override
     def update(self) -> None:
         match self.counter_mode:
             case self.CounterMode.DISABLED:
                 ...
             case self.CounterMode.ENABLED:
-                self._value = byte.Byte(self._value.value + 1)
+                self.value = byte.Byte(self.value.value + 1)
             case self.CounterMode.RESET:
-                self._value = byte.Byte(0)
+                self.value = byte.Byte(0)
         super().update()
 
     @typing.override
