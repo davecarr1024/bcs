@@ -3,7 +3,8 @@ import typing
 
 
 class Byte(typing.Sized, typing.Iterable[bool]):
-    class Error(Exception): ...
+    class Error(Exception):
+        ...
 
     @dataclasses.dataclass(frozen=True)
     class ResultWithCarry:
@@ -29,13 +30,16 @@ class Byte(typing.Sized, typing.Iterable[bool]):
         return [bool(value & (1 << (cls.size() - 1 - i))) for i in range(cls.size())]
 
     @typing.overload
-    def __init__(self) -> None: ...
+    def __init__(self) -> None:
+        ...
 
     @typing.overload
-    def __init__(self, value: int) -> None: ...
+    def __init__(self, value: int) -> None:
+        ...
 
     @typing.overload
-    def __init__(self, value: typing.Sequence[bool]) -> None: ...
+    def __init__(self, value: typing.Sequence[bool]) -> None:
+        ...
 
     def __init__(self, value: int | typing.Sequence[bool] = 0) -> None:
         if isinstance(value, typing.Sequence):
@@ -58,7 +62,8 @@ class Byte(typing.Sized, typing.Iterable[bool]):
         return f"{self._value:#0{4}x}"
 
     def __add__(self, rhs: "Byte") -> ResultWithCarry:
-        carry = (value := self.value + rhs.value) >= self.max()
+        value = self.value + rhs.value
+        carry = value >= self.max()
         return self.ResultWithCarry(Byte(value), carry)
 
     def increment(self) -> bool:

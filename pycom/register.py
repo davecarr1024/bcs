@@ -10,7 +10,8 @@ class Register(component.Component):
         READ = enum.auto()
         WRITE = enum.auto()
 
-    class Action(component.Component.Action["Register"]): ...
+    class Action(component.Component.Action["Register"]):
+        ...
 
     @dataclasses.dataclass(frozen=True)
     class SetDataMode(Action):

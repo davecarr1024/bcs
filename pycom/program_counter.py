@@ -17,7 +17,8 @@ class ProgramCounter(component.Component):
         ENABLED = enum.auto()
         RESET = enum.auto()
 
-    class Action(component.Component.Action["ProgramCounter"]): ...
+    class Action(component.Component.Action["ProgramCounter"]):
+        ...
 
     @dataclasses.dataclass(frozen=True)
     class SetDataMode(Action):

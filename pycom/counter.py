@@ -10,7 +10,8 @@ class Counter(register.Register):
         ENABLED = enum.auto()
         RESET = enum.auto()
 
-    class Action(component.Component.Action["Counter"]): ...
+    class Action(component.Component.Action["Counter"]):
+        ...
 
     @dataclasses.dataclass(frozen=True)
     class SetCounterMode(Action):

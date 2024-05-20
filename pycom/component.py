@@ -6,7 +6,8 @@ _Component = typing.TypeVar("_Component", bound="Component")
 
 
 class Component:
-    class Error(Exception): ...
+    class Error(Exception):
+        ...
 
     @dataclasses.dataclass(frozen=True)
     class UnknownActionError(Error):
@@ -18,7 +19,8 @@ class Component:
         component_name: str
 
         @abc.abstractmethod
-        def __call__(self, component: _Component) -> None: ...
+        def __call__(self, component: _Component) -> None:
+            ...
 
     def __init__(self, name: str | None = None) -> None:
         self._name = name or self.type()
@@ -34,4 +36,5 @@ class Component:
     def apply(self, action: Action) -> None:
         raise self.UnknownActionError(self, action)
 
-    def update(self) -> None: ...
+    def update(self) -> None:
+        ...
