@@ -89,19 +89,13 @@ class ProgramCounter(component.Component):
         self.low_value.value = value
         self.high_value.value = value >> byte.Byte.size()
 
-    def _increment(self) -> bool:
-        carry = self.low_value.increment()
-        if carry:
-            carry = self.high_value.increment()
-        return carry
-
     @typing.override
     def update(self) -> None:
         match self.counter_mode:
             case self.CounterMode.ENABLED:
-                self._increment()
+                self.value += 1
             case self.CounterMode.RESET:
-                self.low_value = self.high_value = byte.Byte(0)
+                self.value = 0
         self.low_byte.update()
         self.high_byte.update()
         super().update()
