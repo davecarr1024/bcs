@@ -20,8 +20,12 @@ class Component:
         @abc.abstractmethod
         def __call__(self, component: _Component) -> None: ...
 
-    def __init__(self, name: str) -> None:
-        self._name = name
+    def __init__(self, name: str | None = None) -> None:
+        self._name = name or self.type()
+
+    @classmethod
+    def type(cls) -> str:
+        return cls.__name__
 
     @property
     def name(self) -> str:

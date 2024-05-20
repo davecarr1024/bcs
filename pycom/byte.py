@@ -1,12 +1,22 @@
+import dataclasses
 import typing
 
 
 class Byte(typing.Sized, typing.Iterable[bool]):
     class Error(Exception): ...
 
+    @dataclasses.dataclass(frozen=True)
+    class ResultWithCarry:
+        result: "Byte"
+        carry: bool
+
     @classmethod
     def size(cls) -> int:
         return 8
+
+    @classmethod
+    def max(cls) -> int:
+        return 1 << cls.size()
 
     @classmethod
     def bits_to_int(cls, bits: typing.Sequence[bool]) -> int:
@@ -47,13 +57,22 @@ class Byte(typing.Sized, typing.Iterable[bool]):
     def __repr__(self) -> str:
         return f"{self._value:#0{4}x}"
 
+    def __add__(self, rhs: "Byte") -> ResultWithCarry:
+        carry = (value := self.value + rhs.value) >= self.max()
+        return self.ResultWithCarry(Byte(value), carry)
+
+    def increment(self) -> bool:
+        result_and_carry = self + Byte(1)
+        self.value = result_and_carry.result.value
+        return result_and_carry.carry
+
     @property
     def value(self) -> int:
         return self._value
 
     @value.setter
     def value(self, value: int) -> None:
-        self._value = value % (1 << self.size())
+        self._value = value % self.max()
 
     @property
     def bits(self) -> typing.Sequence[bool]:
