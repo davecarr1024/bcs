@@ -67,8 +67,9 @@ class Register(component.Component):
 
     def _communicate(self) -> None:
         if self.in_:
+            old_value = self._value
             self._value = self.bus.value
+            if old_value != self._value and self._on_change is not None:
+                self._on_change(self._value)
         elif self.out:
             self.bus.value = self._value
-        if self._on_change is not None:
-            self._on_change(self._value)

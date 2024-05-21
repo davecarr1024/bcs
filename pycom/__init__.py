@@ -5,4 +5,4 @@ from .component import Component
 from .register import Register
 from .counter import Counter
 from .program_counter import ProgramCounter
-from . import memory
+from .memory import Memory

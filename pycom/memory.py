@@ -7,6 +7,7 @@ class Memory(component.Component):
     def __init__(
         self,
         bus: bus.Bus,
+        *,
         name: typing.Optional[str] = None,
         data: typing.Optional[typing.Mapping[int, byte.Byte]] = None,
     ) -> None:
@@ -52,8 +53,9 @@ class Memory(component.Component):
 
     @address_high_byte.setter
     def address_high_byte(self, address_high_byte: byte.Byte) -> None:
-        self._address_high_byte.value = address_high_byte
-        self._communicate()
+        if address_high_byte != self._address_high_byte.value:
+            self._address_high_byte.value = address_high_byte
+            self._communicate()
 
     @property
     def address_low_byte(self) -> byte.Byte:
@@ -61,8 +63,9 @@ class Memory(component.Component):
 
     @address_low_byte.setter
     def address_low_byte(self, address_low_byte: byte.Byte) -> None:
-        self._address_low_byte.value = address_low_byte
-        self._communicate()
+        if address_low_byte != self._address_low_byte.value:
+            self._address_low_byte.value = address_low_byte
+            self._communicate()
 
     @property
     def address(self) -> int:
@@ -70,22 +73,58 @@ class Memory(component.Component):
 
     @address.setter
     def address(self, address: int) -> None:
-        self.address_high_byte, self.address_low_byte, *_ = byte.Byte.int_to_bytes(
-            address
-        )
-        self._communicate()
+        if address != self.address:
+            self.address_high_byte, self.address_low_byte, *_ = byte.Byte.int_to_bytes(
+                address
+            )
+            self._communicate()
+
+    @property
+    def _value(self) -> byte.Byte:
+        return self.data[self.address]
+
+    @_value.setter
+    def _value(self, _value: byte.Byte) -> None:
+        self._data[self.address] = _value
 
     @property
     def value(self) -> byte.Byte:
         self._communicate()
-        value = self.data[self.address]
+        value = self._value
         self._communicate()
         return value
 
     @value.setter
     def value(self, value: byte.Byte) -> None:
-        self._data[self.address] = value
+        if value != self._value:
+            self._value = value
+            self._communicate()
+
+    @property
+    def in_(self) -> bool:
+        return self._in.value
+
+    @in_.setter
+    def in_(self, in_: bool) -> None:
+        self._in.value = in_
         self._communicate()
 
+    @property
+    def out(self) -> bool:
+        return self._out.value
+
+    @out.setter
+    def out(self, out: bool) -> None:
+        self._out.value = out
+        self._communicate()
+
+    @typing.override
+    def update(self) -> None:
+        self._communicate()
+        super().update()
+
     def _communicate(self) -> None:
-        ...
+        if self.in_:
+            self._value = self.bus.value
+        elif self.out:
+            self.bus.value = self._value
