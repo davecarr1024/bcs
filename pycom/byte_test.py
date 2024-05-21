@@ -83,3 +83,39 @@ class ByteTest(unittest.TestCase):
 
     def test_default(self) -> None:
         self.assertEqual(pycom.Byte(0), pycom.Byte())
+
+    def test_bytes_to_int(self) -> None:
+        self.assertEqual(
+            pycom.Byte.bytes_to_int(
+                pycom.Byte(0xBE),
+                pycom.Byte(0xEF),
+            ),
+            0xBEEF,
+        )
+
+    def test_int_to_bytes(self) -> None:
+        self.assertListEqual(
+            list(pycom.Byte.int_to_bytes(0xBEEF)),
+            [
+                pycom.Byte(0xBE),
+                pycom.Byte(0xEF),
+            ],
+        )
+
+    def test_int_to_bytes_pad(self) -> None:
+        self.assertListEqual(
+            list(pycom.Byte.int_to_bytes(1)),
+            [
+                pycom.Byte(0),
+                pycom.Byte(1),
+            ],
+        )
+
+    def test_int_to_bytes_zero(self) -> None:
+        self.assertListEqual(
+            list(pycom.Byte.int_to_bytes(0)),
+            [
+                pycom.Byte(0),
+                pycom.Byte(0),
+            ],
+        )

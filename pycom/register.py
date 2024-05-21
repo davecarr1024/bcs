@@ -1,73 +1,74 @@
 import dataclasses
 import enum
 import typing
+
+from pycom import control
 from . import byte, bus, component
 
 
 class Register(component.Component):
-    class DataMode(enum.Enum):
-        IDLE = enum.auto()
-        READ = enum.auto()
-        WRITE = enum.auto()
-
-    class Action(component.Component.Action["Register"]): ...
-
-    @dataclasses.dataclass(frozen=True)
-    class SetDataMode(Action):
-        data_mode: "Register.DataMode"
-
-        @typing.override
-        def __call__(self, register: "Register") -> None:
-            register.data_mode = self.data_mode
-
     def __init__(
         self,
         bus: bus.Bus,
         name: str,
+        on_change: typing.Optional[typing.Callable[[byte.Byte], None]] = None,
     ) -> None:
-        component.Component.__init__(self, name)
         self.bus = bus
         self._value = byte.Byte()
-        self._data_mode = self.DataMode.IDLE
+        self._on_change = on_change
+        self._in = control.Control("in", lambda _: self._communicate())
+        self._out = control.Control("out", lambda _: self._communicate())
+        component.Component.__init__(
+            self,
+            name,
+            controls=frozenset(
+                {
+                    self._in,
+                    self._out,
+                }
+            ),
+        )
 
     def __str__(self) -> str:
         return f"Register({self.name}={self.value})"
 
     @property
     def value(self) -> byte.Byte:
-        self._read_or_write()
+        self._communicate()
         return self._value
 
     @value.setter
     def value(self, value: byte.Byte) -> None:
         self._value = value
-        self._read_or_write()
+        self._communicate()
 
     @property
-    def data_mode(self) -> DataMode:
-        return self._data_mode
+    def in_(self) -> bool:
+        return self._in.value
 
-    @data_mode.setter
-    def data_mode(self, data_mode: DataMode) -> None:
-        self._data_mode = data_mode
-        self._read_or_write()
+    @in_.setter
+    def in_(self, enable_in: bool) -> None:
+        self._in.value = enable_in
+        self._communicate()
 
-    @typing.override
-    def tick(self) -> None:
-        super().tick()
-        self._read_or_write()
+    @property
+    def out(self) -> bool:
+        return self._out.value
 
-    def _read_or_write(self) -> None:
-        match self.data_mode:
-            case self.DataMode.READ:
-                self._value = self.bus.value
-            case self.DataMode.WRITE:
-                self.bus.value = self._value
+    @out.setter
+    def out(self, enable_out: bool) -> None:
+        self._out.value = enable_out
+        self._communicate()
 
     @typing.override
-    def apply(self, action: component.Component.Action) -> None:
-        match action:
-            case Register.Action():
-                action(self)
-            case _:
-                super().apply(action)
+    def update(self) -> None:
+        self._communicate()
+        super().update()
+
+    def _communicate(self) -> None:
+        if self.in_:
+            self._value = self.bus.value
+        elif self.out:
+            self.bus.value = self._value
+        if self._on_change is not None:
+            self._on_change(self._value)

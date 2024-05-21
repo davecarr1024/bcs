@@ -1,132 +1,91 @@
 import collections
-import dataclasses
-import enum
 import typing
-from pycom import bus, byte, component, register
+from pycom import bus, byte, component, control, register
 
 
 class Memory(component.Component):
-    class DataMode(enum.Enum):
-        IDLE = enum.auto()
-        READ_LOW_ADDRESS = enum.auto()
-        READ_HIGH_ADDRESS = enum.auto()
-        READ_MEMORY = enum.auto()
-        WRITE_MEMORY = enum.auto()
-
-    class Action(component.Component.Action["Memory"]): ...
-
-    @dataclasses.dataclass(frozen=True)
-    class SetDataMode(Action):
-        data_mode: "Memory.DataMode"
-
-        @typing.override
-        def __call__(self, component: "Memory") -> None:
-            component.data_mode = self.data_mode
-
     def __init__(
         self,
         bus: bus.Bus,
-        name: str | None = None,
+        name: typing.Optional[str] = None,
         data: typing.Optional[typing.Mapping[int, byte.Byte]] = None,
     ) -> None:
-        super().__init__(name)
         self.bus = bus
         self._data: typing.MutableMapping[int, byte.Byte] = collections.defaultdict(
             byte.Byte
         ) | dict(data or {})
-        self.low_address_register = register.Register(
+        self._in = control.Control("in", lambda _: self._communicate())
+        self._out = control.Control("out", lambda _: self._communicate())
+        self._address_high_byte = register.Register(
             self.bus,
-            f"{self.name}_low_address",
+            "address_high_byte",
+            lambda _: self._communicate(),
         )
-        self.high_address_register = register.Register(
+        self._address_low_byte = register.Register(
             self.bus,
-            f"{self.name}_high_address",
+            "address_low_byte",
+            lambda _: self._communicate(),
         )
-        self._data_mode = self.DataMode.IDLE
+        super().__init__(
+            name or "memory",
+            children=frozenset(
+                {
+                    self._address_high_byte,
+                    self._address_low_byte,
+                }
+            ),
+            controls=frozenset(
+                {
+                    self._in,
+                    self._out,
+                }
+            ),
+        )
 
     @property
     def data(self) -> typing.Mapping[int, byte.Byte]:
         return self._data
 
     @property
-    def low_address_byte(self) -> byte.Byte:
-        return self.low_address_register.value
+    def address_high_byte(self) -> byte.Byte:
+        return self._address_high_byte.value
 
-    @low_address_byte.setter
-    def low_address_byte(self, low_address: byte.Byte) -> None:
-        self.low_address_register.value = low_address
+    @address_high_byte.setter
+    def address_high_byte(self, address_high_byte: byte.Byte) -> None:
+        self._address_high_byte.value = address_high_byte
+        self._communicate()
 
     @property
-    def high_address_byte(self) -> byte.Byte:
-        return self.high_address_register.value
+    def address_low_byte(self) -> byte.Byte:
+        return self._address_low_byte.value
 
-    @high_address_byte.setter
-    def high_address_byte(self, high_address: byte.Byte) -> None:
-        self.high_address_register.value = high_address
+    @address_low_byte.setter
+    def address_low_byte(self, address_low_byte: byte.Byte) -> None:
+        self._address_low_byte.value = address_low_byte
+        self._communicate()
 
     @property
     def address(self) -> int:
-        return (
-            self.high_address_byte.value << byte.Byte.size()
-        ) | self.low_address_byte.value
+        return byte.Byte.bytes_to_int(self.address_high_byte, self.address_low_byte)
 
     @address.setter
     def address(self, address: int) -> None:
-        self.low_address_byte.value = address
-        self.high_address_byte.value = address >> byte.Byte.size()
-
-    @property
-    def _value(self) -> byte.Byte:
-        return self._data[self.address]
-
-    @_value.setter
-    def _value(self, _value: byte.Byte) -> None:
-        self._data[self.address] = _value
+        self.address_high_byte, self.address_low_byte, *_ = byte.Byte.int_to_bytes(
+            address
+        )
+        self._communicate()
 
     @property
     def value(self) -> byte.Byte:
-        self._read_or_write()
-        value = self._data[self.address]
-        self._read_or_write()
+        self._communicate()
+        value = self.data[self.address]
+        self._communicate()
         return value
 
     @value.setter
     def value(self, value: byte.Byte) -> None:
         self._data[self.address] = value
-        self._read_or_write()
+        self._communicate()
 
-    @property
-    def data_mode(self) -> DataMode:
-        return self._data_mode
-
-    @data_mode.setter
-    def data_mode(self, data_mode: DataMode) -> None:
-        self._data_mode = data_mode
-        self.low_address_register.data_mode = register.Register.DataMode.IDLE
-        self.high_address_register.data_mode = register.Register.DataMode.IDLE
-        match self._data_mode:
-            case self.DataMode.READ_LOW_ADDRESS:
-                self.low_address_register.data_mode = register.Register.DataMode.READ
-            case self.DataMode.READ_HIGH_ADDRESS:
-                self.high_address_register.data_mode = register.Register.DataMode.READ
-        self._read_or_write()
-
-    def _read_or_write(self) -> None:
-        match self._data_mode:
-            case self.DataMode.READ_MEMORY:
-                self._value = self.bus.value
-            case self.DataMode.WRITE_MEMORY:
-                self.bus.value = self._value
-
-    @typing.override
-    def tick(self) -> None:
-        super().tick()
-        self._read_or_write()
-
-    @typing.override
-    def apply(self, action: component.Component.Action) -> None:
-        match action:
-            case Memory.Action():
-                action(self)
-            case _:
-                super().apply(action)
+    def _communicate(self) -> None:
+        ...

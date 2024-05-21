@@ -29,6 +29,25 @@ class Byte(typing.Sized, typing.Iterable[bool]):
     def int_to_bits(cls, value: int) -> typing.Sequence[bool]:
         return [bool(value & (1 << (cls.size() - 1 - i))) for i in range(cls.size())]
 
+    @classmethod
+    def bytes_to_int(cls, *bytes: "Byte") -> int:
+        result = 0
+        for i, byte in enumerate(reversed(bytes)):
+            result |= byte.value << (i * cls.size())
+        return result
+
+    @classmethod
+    def int_to_bytes(
+        cls,
+        value: int,
+        min_num_bytes: int = 2,
+    ) -> typing.Sequence["Byte"]:
+        bytes: typing.MutableSequence[Byte] = []
+        while value or len(bytes) < min_num_bytes:
+            bytes.insert(0, Byte(value))
+            value >>= cls.size()
+        return bytes
+
     @typing.overload
     def __init__(self) -> None:
         ...

@@ -1,109 +1,68 @@
-import dataclasses
-import enum
 import typing
-from pycom import bus, byte, component, register
+from pycom import bus, byte, component, control, register
 
 
 class ProgramCounter(component.Component):
-    class DataMode(enum.Enum):
-        IDLE = enum.auto()
-        READ_LOW_BYTE = enum.auto()
-        READ_HIGH_BYTE = enum.auto()
-        WRITE_LOW_BYTE = enum.auto()
-        WRITE_HIGH_BYTE = enum.auto()
-
-    class CounterMode(enum.Enum):
-        DISABLED = enum.auto()
-        ENABLED = enum.auto()
-        RESET = enum.auto()
-
-    class Action(component.Component.Action["ProgramCounter"]): ...
-
-    @dataclasses.dataclass(frozen=True)
-    class SetDataMode(Action):
-        data_mode: "ProgramCounter.DataMode"
-
-        @typing.override
-        def __call__(self, component: "ProgramCounter") -> None:
-            component.data_mode = self.data_mode
-
-    @dataclasses.dataclass(frozen=True)
-    class SetCounterMode(Action):
-        counter_mode: "ProgramCounter.CounterMode"
-
-        @typing.override
-        def __call__(self, component: "ProgramCounter") -> None:
-            component.counter_mode = self.counter_mode
-
-    def __init__(self, bus: bus.Bus, name: str | None = None) -> None:
-        super().__init__(name)
+    def __init__(
+        self,
+        bus: bus.Bus,
+        name: str | None = None,
+    ) -> None:
         self.bus = bus
-        self.low_register = register.Register(self.bus, f"{self.name}_low_byte")
-        self.high_register = register.Register(self.bus, f"{self.name}_high_byte")
-        self._data_mode = self.DataMode.IDLE
-        self.counter_mode = self.CounterMode.DISABLED
-
-    @property
-    def data_mode(self) -> DataMode:
-        return self._data_mode
-
-    @data_mode.setter
-    def data_mode(self, data_mode: DataMode) -> None:
-        self._data_mode = data_mode
-        match self._data_mode:
-            case self.DataMode.READ_LOW_BYTE:
-                self.low_register.data_mode = register.Register.DataMode.READ
-                self.high_register.data_mode = register.Register.DataMode.IDLE
-            case self.DataMode.READ_HIGH_BYTE:
-                self.low_register.data_mode = register.Register.DataMode.IDLE
-                self.high_register.data_mode = register.Register.DataMode.READ
-            case self.DataMode.WRITE_LOW_BYTE:
-                self.low_register.data_mode = register.Register.DataMode.WRITE
-                self.high_register.data_mode = register.Register.DataMode.IDLE
-            case self.DataMode.WRITE_HIGH_BYTE:
-                self.low_register.data_mode = register.Register.DataMode.IDLE
-                self.high_register.data_mode = register.Register.DataMode.WRITE
+        self._increment = control.Control("increment")
+        self._reset = control.Control("reset")
+        self._low_byte = register.Register(self.bus, "low_byte")
+        self._high_byte = register.Register(self.bus, "high_byte")
+        super().__init__(
+            name or "program_counter",
+            children=frozenset({self._low_byte, self._high_byte}),
+            controls=frozenset({self._increment, self._reset}),
+        )
 
     @property
     def low_byte(self) -> byte.Byte:
-        return self.low_register.value
+        return self._low_byte.value
 
     @low_byte.setter
-    def low_byte(self, low_value: byte.Byte) -> None:
-        self.low_register.value = low_value
+    def low_byte(self, low: byte.Byte) -> None:
+        self._low_byte.value = low
 
     @property
     def high_byte(self) -> byte.Byte:
-        return self.high_register.value
+        return self._high_byte.value
 
     @high_byte.setter
-    def high_byte(self, high_value: byte.Byte) -> None:
-        self.high_register.value = high_value
+    def high_byte(self, high: byte.Byte) -> None:
+        self._high_byte.value = high
 
     @property
     def value(self) -> int:
-        return (self.high_byte.value << byte.Byte.size()) | self.low_byte.value
+        return byte.Byte.bytes_to_int(self.high_byte, self.low_byte)
 
     @value.setter
     def value(self, value: int) -> None:
-        self.low_byte.value = value
-        self.high_byte.value = value >> byte.Byte.size()
+        self.high_byte, self.low_byte, *_ = byte.Byte.int_to_bytes(value)
+
+    @property
+    def increment(self) -> bool:
+        return self._increment.value
+
+    @increment.setter
+    def increment(self, increment: bool) -> None:
+        self._increment.value = increment
+
+    @property
+    def reset(self) -> bool:
+        return self._reset.value
+
+    @reset.setter
+    def reset(self, reset: bool) -> None:
+        self._reset.value = reset
 
     @typing.override
-    def tick(self) -> None:
-        match self.counter_mode:
-            case self.CounterMode.ENABLED:
-                self.value += 1
-            case self.CounterMode.RESET:
-                self.value = 0
-        self.low_register.tick()
-        self.high_register.tick()
-        super().tick()
-
-    @typing.override
-    def apply(self, action: component.Component.Action) -> None:
-        match action:
-            case ProgramCounter.Action():
-                action(self)
-            case _:
-                super().apply(action)
+    def update(self) -> None:
+        if self.increment:
+            self.value += 1
+        elif self.reset:
+            self.value = 0
+        super().update()
