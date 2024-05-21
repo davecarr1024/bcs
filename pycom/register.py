@@ -54,8 +54,8 @@ class Register(component.Component):
 
     @typing.override
     def tick(self) -> None:
-        self._read_or_write()
         super().tick()
+        self._read_or_write()
 
     def _read_or_write(self) -> None:
         match self.data_mode:
