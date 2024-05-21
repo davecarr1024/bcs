@@ -45,6 +45,10 @@ class Memory(component.Component):
         self._data_mode = self.DataMode.IDLE
 
     @property
+    def data(self) -> typing.Mapping[int, byte.Byte]:
+        return self._data
+
+    @property
     def low_address(self) -> byte.Byte:
         return self.low_address_register.value
 
@@ -70,12 +74,24 @@ class Memory(component.Component):
         self.high_address.value = address >> byte.Byte.size()
 
     @property
-    def value(self) -> byte.Byte:
+    def _value(self) -> byte.Byte:
         return self._data[self.address]
+
+    @_value.setter
+    def _value(self, _value: byte.Byte) -> None:
+        self._data[self.address] = _value
+
+    @property
+    def value(self) -> byte.Byte:
+        self._read_or_write()
+        value = self._data[self.address]
+        self._read_or_write()
+        return value
 
     @value.setter
     def value(self, value: byte.Byte) -> None:
         self._data[self.address] = value
+        self._read_or_write()
 
     @property
     def data_mode(self) -> DataMode:
@@ -91,15 +107,20 @@ class Memory(component.Component):
                 self.low_address_register.data_mode = register.Register.DataMode.READ
             case self.DataMode.READ_HIGH_ADDRESS:
                 self.high_address_register.data_mode = register.Register.DataMode.READ
-            case self.DataMode.READ_MEMORY | self.DataMode.WRITE_MEMORY:
-                self._read_or_write()
+        self._read_or_write()
 
     def _read_or_write(self) -> None:
         match self._data_mode:
             case self.DataMode.READ_MEMORY:
-                self.value = self.bus.value
+                self._read()
             case self.DataMode.WRITE_MEMORY:
-                self.bus.value = self.value
+                self._write()
+
+    def _read(self) -> None:
+        self._value = self.bus.value
+
+    def _write(self) -> None:
+        self.bus.value = self._value
 
     @typing.override
     def tick(self) -> None:
