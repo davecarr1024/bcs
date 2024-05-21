@@ -3,9 +3,11 @@ import typing
 
 
 class Control:
-    class Error(Exception): ...
+    class Error(Exception):
+        ...
 
-    class ValidationError(Exception): ...
+    class ValidationError(Exception):
+        ...
 
     def __init__(
         self,

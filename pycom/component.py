@@ -3,13 +3,17 @@ import typing
 
 
 class Component:
-    class Error(Exception): ...
+    class Error(Exception):
+        ...
 
-    class ValidationError(Error): ...
+    class ValidationError(Error):
+        ...
 
-    class ChildNotFoundError(Error, KeyError): ...
+    class ChildNotFoundError(Error, KeyError):
+        ...
 
-    class ControlNotFoundError(Error, KeyError): ...
+    class ControlNotFoundError(Error, KeyError):
+        ...
 
     def __init__(
         self,
@@ -17,12 +21,12 @@ class Component:
         *,
         parent: typing.Optional["Component"] = None,
         children: typing.Optional[frozenset["Component"]] = None,
-        controls: typing.Optional[frozenset["control.Control"]] = None,
+        controls: typing.Optional[frozenset["control_lib.Control"]] = None,
     ) -> None:
         self.__name = name
         self.__parent = None
         self.__children: frozenset[Component] = frozenset()
-        self.__controls: frozenset["control.Control"] = frozenset()
+        self.__controls: frozenset["control_lib.Control"] = frozenset()
         self.__pause_validation_count = 0
         with self._pause_validation():
             if parent is not None:
@@ -113,12 +117,12 @@ class Component:
                 return self.child(name[:dot_pos]).child(name[dot_pos + 1 :])
 
     @property
-    def controls(self) -> frozenset["control.Control"]:
+    def controls(self) -> frozenset["control_lib.Control"]:
         return self.__controls
 
     @property
-    def all_controls(self) -> frozenset["control.Control"]:
-        controls: set[control.Control] = set(self.controls)
+    def all_controls(self) -> frozenset["control_lib.Control"]:
+        controls: set[control_lib.Control] = set(self.controls)
         for child in self.children:
             controls |= child.all_controls
         return frozenset(controls)
@@ -127,7 +131,7 @@ class Component:
         self.control(name).value = value
 
     def set_controls(self, *names: str) -> None:
-        all_values: dict["control.Control", bool] = {
+        all_values: dict["control_lib.Control", bool] = {
             control: False for control in self.all_controls
         }
         for name in names:
@@ -136,10 +140,10 @@ class Component:
             control.value = value
 
     @property
-    def controls_by_name(self) -> typing.Mapping[str, "control.Control"]:
+    def controls_by_name(self) -> typing.Mapping[str, "control_lib.Control"]:
         return {control.name: control for control in self.controls}
 
-    def control(self, name: str) -> "control.Control":
+    def control(self, name: str) -> "control_lib.Control":
         match (dot_pos := name.find(".")):
             case -1:
                 if name not in self.controls_by_name:
@@ -148,13 +152,13 @@ class Component:
             case _:
                 return self.child(name[:dot_pos]).control(name[dot_pos + 1 :])
 
-    def add_control(self, control: "control.Control") -> None:
+    def add_control(self, control: "control_lib.Control") -> None:
         if control not in self.controls:
             with self._pause_validation():
                 self.__controls |= frozenset({control})
                 control.component = self
 
-    def remove_control(self, control: "control.Control") -> None:
+    def remove_control(self, control: "control_lib.Control") -> None:
         if control in self.controls:
             with self._pause_validation():
                 self.__controls -= frozenset({control})
@@ -184,4 +188,4 @@ class Component:
             child.update()
 
 
-from . import control
+from . import control as control_lib
