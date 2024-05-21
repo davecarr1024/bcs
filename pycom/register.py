@@ -60,9 +60,9 @@ class Register(component.Component):
     def _read_or_write(self) -> None:
         match self.data_mode:
             case self.DataMode.READ:
-                self._read()
+                self._value = self.bus.value
             case self.DataMode.WRITE:
-                self._write()
+                self.bus.value = self._value
 
     @typing.override
     def apply(self, action: component.Component.Action) -> None:
@@ -71,9 +71,3 @@ class Register(component.Component):
                 action(self)
             case _:
                 super().apply(action)
-
-    def _read(self) -> None:
-        self._value = self.bus.value
-
-    def _write(self) -> None:
-        self.bus.value = self._value

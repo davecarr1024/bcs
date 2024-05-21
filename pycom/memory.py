@@ -49,29 +49,31 @@ class Memory(component.Component):
         return self._data
 
     @property
-    def low_address(self) -> byte.Byte:
+    def low_address_byte(self) -> byte.Byte:
         return self.low_address_register.value
 
-    @low_address.setter
-    def low_address(self, low_address: byte.Byte) -> None:
+    @low_address_byte.setter
+    def low_address_byte(self, low_address: byte.Byte) -> None:
         self.low_address_register.value = low_address
 
     @property
-    def high_address(self) -> byte.Byte:
+    def high_address_byte(self) -> byte.Byte:
         return self.high_address_register.value
 
-    @high_address.setter
-    def high_address(self, high_address: byte.Byte) -> None:
+    @high_address_byte.setter
+    def high_address_byte(self, high_address: byte.Byte) -> None:
         self.high_address_register.value = high_address
 
     @property
     def address(self) -> int:
-        return (self.high_address.value << byte.Byte.size()) | self.low_address.value
+        return (
+            self.high_address_byte.value << byte.Byte.size()
+        ) | self.low_address_byte.value
 
     @address.setter
     def address(self, address: int) -> None:
-        self.low_address.value = address
-        self.high_address.value = address >> byte.Byte.size()
+        self.low_address_byte.value = address
+        self.high_address_byte.value = address >> byte.Byte.size()
 
     @property
     def _value(self) -> byte.Byte:
@@ -112,15 +114,9 @@ class Memory(component.Component):
     def _read_or_write(self) -> None:
         match self._data_mode:
             case self.DataMode.READ_MEMORY:
-                self._read()
+                self._value = self.bus.value
             case self.DataMode.WRITE_MEMORY:
-                self._write()
-
-    def _read(self) -> None:
-        self._value = self.bus.value
-
-    def _write(self) -> None:
-        self.bus.value = self._value
+                self.bus.value = self._value
 
     @typing.override
     def tick(self) -> None:

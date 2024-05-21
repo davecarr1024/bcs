@@ -38,8 +38,8 @@ class ProgramCounter(component.Component):
     def __init__(self, bus: bus.Bus, name: str | None = None) -> None:
         super().__init__(name)
         self.bus = bus
-        self.low_byte = register.Register(self.bus, f"{self.name}_low_byte")
-        self.high_byte = register.Register(self.bus, f"{self.name}_high_byte")
+        self.low_register = register.Register(self.bus, f"{self.name}_low_byte")
+        self.high_register = register.Register(self.bus, f"{self.name}_high_byte")
         self._data_mode = self.DataMode.IDLE
         self.counter_mode = self.CounterMode.DISABLED
 
@@ -52,42 +52,42 @@ class ProgramCounter(component.Component):
         self._data_mode = data_mode
         match self._data_mode:
             case self.DataMode.READ_LOW_BYTE:
-                self.low_byte.data_mode = register.Register.DataMode.READ
-                self.high_byte.data_mode = register.Register.DataMode.IDLE
+                self.low_register.data_mode = register.Register.DataMode.READ
+                self.high_register.data_mode = register.Register.DataMode.IDLE
             case self.DataMode.READ_HIGH_BYTE:
-                self.low_byte.data_mode = register.Register.DataMode.IDLE
-                self.high_byte.data_mode = register.Register.DataMode.READ
+                self.low_register.data_mode = register.Register.DataMode.IDLE
+                self.high_register.data_mode = register.Register.DataMode.READ
             case self.DataMode.WRITE_LOW_BYTE:
-                self.low_byte.data_mode = register.Register.DataMode.WRITE
-                self.high_byte.data_mode = register.Register.DataMode.IDLE
+                self.low_register.data_mode = register.Register.DataMode.WRITE
+                self.high_register.data_mode = register.Register.DataMode.IDLE
             case self.DataMode.WRITE_HIGH_BYTE:
-                self.low_byte.data_mode = register.Register.DataMode.IDLE
-                self.high_byte.data_mode = register.Register.DataMode.WRITE
+                self.low_register.data_mode = register.Register.DataMode.IDLE
+                self.high_register.data_mode = register.Register.DataMode.WRITE
 
     @property
-    def low_value(self) -> byte.Byte:
-        return self.low_byte.value
+    def low_byte(self) -> byte.Byte:
+        return self.low_register.value
 
-    @low_value.setter
-    def low_value(self, low_value: byte.Byte) -> None:
-        self.low_byte.value = low_value
+    @low_byte.setter
+    def low_byte(self, low_value: byte.Byte) -> None:
+        self.low_register.value = low_value
 
     @property
-    def high_value(self) -> byte.Byte:
-        return self.high_byte.value
+    def high_byte(self) -> byte.Byte:
+        return self.high_register.value
 
-    @high_value.setter
-    def high_value(self, high_value: byte.Byte) -> None:
-        self.high_byte.value = high_value
+    @high_byte.setter
+    def high_byte(self, high_value: byte.Byte) -> None:
+        self.high_register.value = high_value
 
     @property
     def value(self) -> int:
-        return (self.high_value.value << byte.Byte.size()) | self.low_value.value
+        return (self.high_byte.value << byte.Byte.size()) | self.low_byte.value
 
     @value.setter
     def value(self, value: int) -> None:
-        self.low_value.value = value
-        self.high_value.value = value >> byte.Byte.size()
+        self.low_byte.value = value
+        self.high_byte.value = value >> byte.Byte.size()
 
     @typing.override
     def tick(self) -> None:
@@ -96,8 +96,8 @@ class ProgramCounter(component.Component):
                 self.value += 1
             case self.CounterMode.RESET:
                 self.value = 0
-        self.low_byte.tick()
-        self.high_byte.tick()
+        self.low_register.tick()
+        self.high_register.tick()
         super().tick()
 
     @typing.override

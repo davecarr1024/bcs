@@ -25,7 +25,7 @@ class Component:
 
     @classmethod
     def type(cls) -> str:
-        return cls.__name__
+        return cls.__name__.lower()
 
     @property
     def name(self) -> str:
