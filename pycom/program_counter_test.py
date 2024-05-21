@@ -10,7 +10,7 @@ class ProgramCounterTest(unittest.TestCase):
         pc.low_value = pycom.Byte(pycom.Byte.max() - 1)
         pc.high_value = pycom.Byte(0)
         pc.counter_mode = pycom.ProgramCounter.CounterMode.ENABLED
-        pc.update()
+        pc.tick()
         self.assertEqual(pc.low_value, pycom.Byte(0))
         self.assertEqual(pc.high_value, pycom.Byte(1))
 
@@ -19,7 +19,7 @@ class ProgramCounterTest(unittest.TestCase):
         pc.low_value = pycom.Byte(1)
         pc.high_value = pycom.Byte(2)
         pc.counter_mode = pycom.ProgramCounter.CounterMode.ENABLED
-        pc.update()
+        pc.tick()
         self.assertEqual(pc.low_value, pycom.Byte(2))
         self.assertEqual(pc.high_value, pycom.Byte(2))
 
@@ -28,7 +28,7 @@ class ProgramCounterTest(unittest.TestCase):
         pc.low_value = pycom.Byte(1)
         pc.high_value = pycom.Byte(2)
         pc.counter_mode = pycom.ProgramCounter.CounterMode.DISABLED
-        pc.update()
+        pc.tick()
         self.assertEqual(pc.low_value, pycom.Byte(1))
         self.assertEqual(pc.high_value, pycom.Byte(2))
 
@@ -37,7 +37,7 @@ class ProgramCounterTest(unittest.TestCase):
         pc.low_value = pycom.Byte(1)
         pc.high_value = pycom.Byte(2)
         pc.counter_mode = pycom.ProgramCounter.CounterMode.RESET
-        pc.update()
+        pc.tick()
         self.assertEqual(pc.low_value, pycom.Byte(0))
         self.assertEqual(pc.high_value, pycom.Byte(0))
 

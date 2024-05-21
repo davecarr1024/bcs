@@ -10,8 +10,7 @@ class Register(component.Component):
         READ = enum.auto()
         WRITE = enum.auto()
 
-    class Action(component.Component.Action["Register"]):
-        ...
+    class Action(component.Component.Action["Register"]): ...
 
     @dataclasses.dataclass(frozen=True)
     class SetDataMode(Action):
@@ -54,9 +53,9 @@ class Register(component.Component):
         self._read_or_write()
 
     @typing.override
-    def update(self) -> None:
+    def tick(self) -> None:
         self._read_or_write()
-        super().update()
+        super().tick()
 
     def _read_or_write(self) -> None:
         match self.data_mode:

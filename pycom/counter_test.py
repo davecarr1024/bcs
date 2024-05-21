@@ -25,7 +25,7 @@ class CounterTest(unittest.TestCase):
         counter = pycom.Counter(bus, "a")
         counter.counter_mode = pycom.Counter.CounterMode.DISABLED
         counter.value = pycom.Byte(1)
-        counter.update()
+        counter.tick()
         self.assertEqual(pycom.Byte(1), counter.value)
 
     def test_enabled(self) -> None:
@@ -33,7 +33,7 @@ class CounterTest(unittest.TestCase):
         counter = pycom.Counter(bus, "a")
         counter.counter_mode = pycom.Counter.CounterMode.ENABLED
         counter.value = pycom.Byte(1)
-        counter.update()
+        counter.tick()
         self.assertEqual(pycom.Byte(2), counter.value)
 
     def test_reset(self) -> None:
@@ -41,5 +41,5 @@ class CounterTest(unittest.TestCase):
         counter = pycom.Counter(bus, "a")
         counter.counter_mode = pycom.Counter.CounterMode.RESET
         counter.value = pycom.Byte(1)
-        counter.update()
+        counter.tick()
         self.assertEqual(pycom.Byte(0), counter.value)

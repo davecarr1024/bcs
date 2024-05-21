@@ -10,7 +10,7 @@ class RegisterTest(unittest.TestCase):
         register.data_mode = pycom.Register.DataMode.IDLE
         bus.value = pycom.Byte(1)
         register.value = pycom.Byte(2)
-        register.update()
+        register.tick()
         self.assertEqual(bus.value, pycom.Byte(1))
         self.assertEqual(register.value, pycom.Byte(2))
 
@@ -20,7 +20,7 @@ class RegisterTest(unittest.TestCase):
         register.data_mode = pycom.Register.DataMode.READ
         bus.value = pycom.Byte(1)
         register.value = pycom.Byte(2)
-        register.update()
+        register.tick()
         self.assertEqual(bus.value, pycom.Byte(1))
         self.assertEqual(register.value, pycom.Byte(1))
 
@@ -30,7 +30,7 @@ class RegisterTest(unittest.TestCase):
         bus.value = pycom.Byte(1)
         register.value = pycom.Byte(2)
         register.data_mode = pycom.Register.DataMode.WRITE
-        register.update()
+        register.tick()
         self.assertEqual(bus.value, pycom.Byte(2))
         self.assertEqual(register.value, pycom.Byte(2))
 

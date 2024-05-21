@@ -17,8 +17,7 @@ class ProgramCounter(component.Component):
         ENABLED = enum.auto()
         RESET = enum.auto()
 
-    class Action(component.Component.Action["ProgramCounter"]):
-        ...
+    class Action(component.Component.Action["ProgramCounter"]): ...
 
     @dataclasses.dataclass(frozen=True)
     class SetDataMode(Action):
@@ -91,15 +90,15 @@ class ProgramCounter(component.Component):
         self.high_value.value = value >> byte.Byte.size()
 
     @typing.override
-    def update(self) -> None:
+    def tick(self) -> None:
         match self.counter_mode:
             case self.CounterMode.ENABLED:
                 self.value += 1
             case self.CounterMode.RESET:
                 self.value = 0
-        self.low_byte.update()
-        self.high_byte.update()
-        super().update()
+        self.low_byte.tick()
+        self.high_byte.tick()
+        super().tick()
 
     @typing.override
     def apply(self, action: component.Component.Action) -> None:

@@ -3,11 +3,9 @@ from . import component
 
 
 class Computer:
-    class Error(Exception):
-        ...
+    class Error(Exception): ...
 
-    class UnknownComponentError(Error, KeyError):
-        ...
+    class UnknownComponentError(Error, KeyError): ...
 
     def __init__(self, *components: component.Component) -> None:
         self.components = frozenset(components)
@@ -46,4 +44,4 @@ class Computer:
 
     def update(self) -> None:
         for component in self.components:
-            component.update()
+            component.tick()

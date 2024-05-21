@@ -10,8 +10,7 @@ class Counter(register.Register):
         ENABLED = enum.auto()
         RESET = enum.auto()
 
-    class Action(component.Component.Action["Counter"]):
-        ...
+    class Action(component.Component.Action["Counter"]): ...
 
     @dataclasses.dataclass(frozen=True)
     class SetCounterMode(Action):
@@ -30,7 +29,7 @@ class Counter(register.Register):
         self.counter_mode = self.CounterMode.DISABLED
 
     @typing.override
-    def update(self) -> None:
+    def tick(self) -> None:
         match self.counter_mode:
             case self.CounterMode.DISABLED:
                 ...
@@ -38,7 +37,7 @@ class Counter(register.Register):
                 self.value = byte.Byte(self.value.value + 1)
             case self.CounterMode.RESET:
                 self.value = byte.Byte(0)
-        super().update()
+        super().tick()
 
     @typing.override
     def apply(self, action: component.Component.Action) -> None:
