@@ -30,7 +30,7 @@ class Register(component.Component):
         )
 
     def __str__(self) -> str:
-        return f"Register({self.name}={self.value})"
+        return f"{self.__class__.__name__}({self.name}={self.value})"
 
     @property
     def value(self) -> byte.Byte:
