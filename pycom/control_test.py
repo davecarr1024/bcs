@@ -27,3 +27,21 @@ class ControlTest(unittest.TestCase):
         self.assertTrue(on_change_value)
         c.value = False
         self.assertFalse(on_change_value)
+
+    def test_ctor_component(self) -> None:
+        a = pycom.Component("a")
+        c = pycom.Control("c", component=a)
+        self.assertIs(c.component, a)
+        self.assertSetEqual(a.controls, frozenset({c}))
+
+    def test_set_component(self) -> None:
+        a = pycom.Component("a")
+        c = pycom.Control("c")
+        c.component = a
+        self.assertIs(c.component, a)
+        self.assertSetEqual(a.controls, frozenset({c}))
+
+    def test_path(self) -> None:
+        a = pycom.Component("a")
+        c = pycom.Control("c", component=a)
+        self.assertEqual(c.path, "a.c")

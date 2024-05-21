@@ -1,6 +1,5 @@
 import contextlib
 import typing
-from pycom import control
 
 
 class Component:
@@ -23,7 +22,7 @@ class Component:
         self.__name = name
         self.__parent = None
         self.__children: frozenset[Component] = frozenset()
-        self.__controls: frozenset[control.Control] = controls or frozenset()
+        self.__controls: frozenset["control.Control"] = frozenset()
         self.__pause_validation_count = 0
         with self._pause_validation():
             if parent is not None:
@@ -31,6 +30,9 @@ class Component:
             if children is not None:
                 for child in children:
                     self.add_child(child)
+            if controls is not None:
+                for control in controls:
+                    self.add_control(control)
 
     def __eq__(self, rhs: object) -> bool:
         return self is rhs
@@ -42,7 +44,7 @@ class Component:
     def _pause_validation(self) -> typing.Iterator[None]:
         try:
             self.__pause_validation_count += 1
-            yield None
+            yield
         finally:
             self.__pause_validation_count -= 1
             self._validate_if_enabled()
@@ -121,6 +123,18 @@ class Component:
             controls |= child.all_controls
         return frozenset(controls)
 
+    def set_control(self, name: str, value: bool) -> None:
+        self.control(name).value = value
+
+    def set_controls(self, *names: str) -> None:
+        all_values: dict["control.Control", bool] = {
+            control: False for control in self.all_controls
+        }
+        for name in names:
+            all_values[self.control(name)] = True
+        for control, value in all_values.items():
+            control.value = value
+
     @property
     def controls_by_name(self) -> typing.Mapping[str, "control.Control"]:
         return {control.name: control for control in self.controls}
@@ -134,6 +148,18 @@ class Component:
             case _:
                 return self.child(name[:dot_pos]).control(name[dot_pos + 1 :])
 
+    def add_control(self, control: "control.Control") -> None:
+        if control not in self.controls:
+            with self._pause_validation():
+                self.__controls |= frozenset({control})
+                control.component = self
+
+    def remove_control(self, control: "control.Control") -> None:
+        if control in self.controls:
+            with self._pause_validation():
+                self.__controls -= frozenset({control})
+                control.component = None
+
     def validate(self) -> None:
         if len(self.children_by_name) != len(self.children):
             raise self.ValidationError(f"duplicate child names")
@@ -146,9 +172,16 @@ class Component:
             raise self.ValidationError(f"component {self} not in parent {self.parent}")
         if len(self.controls_by_name) != len(self.controls):
             raise self.ValidationError(f"duplicate control names")
+        for control in self.controls:
+            if self is not control.component:
+                raise self.ValidationError(f"control {control} not in component {self}")
+            control.validate()
         for child in self.children:
             child.validate()
 
     def update(self) -> None:
         for child in self.children:
             child.update()
+
+
+from . import control

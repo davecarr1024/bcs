@@ -1,5 +1,4 @@
 import unittest
-
 import pycom
 
 
@@ -94,6 +93,23 @@ class ComponentTest(unittest.TestCase):
         self.assertDictEqual(a.controls_by_name, {"c": c})
         self.assertIs(a.control("c"), c)
 
+    def test_add_control(self) -> None:
+        c = pycom.Control("c")
+        a = pycom.Component("a")
+        a.add_control(c)
+        self.assertIs(c.component, a)
+        self.assertSetEqual(a.controls, frozenset({c}))
+
+    def test_remove_control(self) -> None:
+        c = pycom.Control("c")
+        a = pycom.Component("a")
+        a.add_control(c)
+        self.assertIs(c.component, a)
+        self.assertSetEqual(a.controls, frozenset({c}))
+        a.remove_control(c)
+        self.assertIsNone(c.component)
+        self.assertSetEqual(a.controls, frozenset())
+
     def test_control_not_found(self) -> None:
         with self.assertRaises(pycom.Component.ControlNotFoundError):
             pycom.Component("a").control("c")
@@ -103,3 +119,30 @@ class ComponentTest(unittest.TestCase):
         b = pycom.Component("b", controls=frozenset({c}))
         a = pycom.Component("a", children=frozenset({b}))
         self.assertIs(a.control("b.c"), c)
+
+    def test_all_controls(self) -> None:
+        c1 = pycom.Control("c1")
+        c2 = pycom.Control("c2")
+        c3 = pycom.Control("c3")
+        a = pycom.Component("a", controls=frozenset({c1, c2}))
+        b = pycom.Component("b", children=frozenset({a}), controls=frozenset({c3}))
+        self.assertSetEqual(b.all_controls, frozenset({c1, c2, c3}))
+
+    def test_set_control(self) -> None:
+        c = pycom.Control("c")
+        a = pycom.Component("a", controls=frozenset({c}))
+        b = pycom.Component("b", children=frozenset({a}))
+        b.set_control("a.c", True)
+        self.assertTrue(c.value)
+
+    def test_set_controls(self) -> None:
+        c1 = pycom.Control("c1")
+        c2 = pycom.Control("c2")
+        a = pycom.Component("a", controls=frozenset({c1, c2}))
+        b = pycom.Component("b", children=frozenset({a}))
+        b.set_controls("a.c1")
+        self.assertTrue(c1.value)
+        self.assertFalse(c2.value)
+        b.set_controls("a.c2")
+        self.assertFalse(c1.value)
+        self.assertTrue(c2.value)
