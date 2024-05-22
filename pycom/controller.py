@@ -27,168 +27,43 @@ class Controller(component.Component):
                 )
             )
 
-    @staticmethod
-    def _entry(
-        instruction: typing.Optional[int] = None,
-        instruction_counter: typing.Optional[int] = None,
-        *controls: str,
-    ) -> Entry:
-        return Controller.Entry(
-            instruction=byte.Byte(instruction) if instruction is not None else None,
-            instruction_counter=(
-                byte.Byte(instruction_counter)
-                if instruction_counter is not None
-                else None
-            ),
-            controls=frozenset(controls),
-        )
-
-    @staticmethod
-    def _preamble() -> frozenset[Entry]:
-        return frozenset(
-            {
-                Controller._entry(
-                    None,
-                    0,
-                    "controller.instruction_counter.increment",
-                    "program_counter.high_byte.out",
-                    "memory.address_high_byte.in",
+        @classmethod
+        def build(
+            cls,
+            instruction: typing.Optional[int] = None,
+            instruction_counter: typing.Optional[int] = None,
+            *controls: str,
+        ) -> "Controller.Entry":
+            return Controller.Entry(
+                instruction=(
+                    byte.Byte(instruction) if instruction is not None else byte.Byte()
                 ),
-                Controller._entry(
-                    None,
-                    1,
-                    "controller.instruction_counter.increment",
-                    "program_counter.low_byte.out",
-                    "memory.address_low_byte.in",
+                instruction_counter=(
+                    byte.Byte(instruction_counter)
+                    if instruction_counter is not None
+                    else byte.Byte()
                 ),
-                Controller._entry(
-                    None,
-                    2,
-                    "controller.instruction_counter.increment",
-                    "memory.out",
-                    "controller.instruction_buffer.in",
-                    "program_counter.increment",
-                ),
-            }
-        )
-
-    @staticmethod
-    def _instruction(
-        instruction: int, *control_sets: typing.Sequence[str]
-    ) -> frozenset[Entry]:
-        control_sets_: typing.MutableSequence[typing.MutableSequence[str]] = []
-        for instruction_counter, control_set in enumerate(control_sets):
-            control_set_: typing.MutableSequence[str] = list(control_set)
-            if (
-                instruction_counter < len(control_sets) - 1
-                and "controller.instruction_counter.increment" not in control_set
-            ):
-                control_set_.append("controller.instruction_counter.increment")
-            if (
-                instruction_counter == len(control_sets) - 1
-                and "controller.instruction_counter.reset" not in control_set
-            ):
-                control_set_.append("controller.instruction_counter.reset")
-            control_sets_.append(control_set_)
-            assert (
-                "controller.instruction_counter.increment" in control_set_
-                or "controller.instruction_counter.reset" in control_set_
-            ), str((control_set, control_set_, instruction_counter, len(control_sets)))
-
-        return frozenset(
-            {
-                Controller._entry(
-                    instruction,
-                    instruction_counter + len(Controller._preamble()),
-                    *controls,
-                )
-                for instruction_counter, controls in enumerate(control_sets_)
-            }
-        )
-
-    @staticmethod
-    def _default_entries() -> frozenset[Entry]:
-        return frozenset.union(
-            Controller._preamble(),
-            # nop
-            Controller._instruction(
-                0x00,
-                [],
-            ),
-            # lda immediate
-            Controller._instruction(
-                0x01,
-                [
-                    "program_counter.high_byte.out",
-                    "memory.address_high_byte.in",
-                ],
-                [
-                    "program_counter.low_byte.out",
-                    "memory.address_low_byte.in",
-                ],
-                [
-                    "memory.out",
-                    "a.in",
-                    "program_counter.increment",
-                ],
-            ),
-            # lda memory
-            Controller._instruction(
-                0x02,
-                [
-                    "program_counter.high_byte.out",
-                    "memory.address_high_byte.in",
-                ],
-                [
-                    "program_counter.low_byte.out",
-                    "memory.address_low_byte.in",
-                ],
-                [
-                    "memory.out",
-                    "a.in",
-                    "program_counter.increment",
-                ],
-                [
-                    "program_counter.high_byte.out",
-                    "memory.address_high_byte.in",
-                ],
-                [
-                    "program_counter.low_byte.out",
-                    "memory.address_low_byte.in",
-                ],
-                [
-                    "memory.out",
-                    "memory.address_low_byte.in",
-                    "program_counter.increment",
-                ],
-                [
-                    "a.out",
-                    "memory.address_high_byte.in",
-                ],
-                [
-                    "memory.out",
-                    "a.in",
-                ],
-            ),
-        )
+                controls=frozenset(controls),
+            )
 
     def __init__(
         self,
         bus: bus.Bus,
-        *,
+        entries: frozenset[Entry],
         name: typing.Optional[str] = None,
-        entries: typing.Optional[frozenset[Entry]] = None,
     ) -> None:
         self.bus = bus
-        self._entries = entries or self._default_entries()
+        self._entries = entries
         self._instruction_buffer = register.Register(self.bus, "instruction_buffer")
         self._instruction_counter = counter.Counter(self.bus, "instruction_counter")
+        self._address_buffer = register.Register(self.bus, "address_buffer")
         super().__init__(
             name or "controller",
             children=frozenset(
                 {
                     self._instruction_buffer,
                     self._instruction_counter,
+                    self._address_buffer,
                 }
             ),
         )
