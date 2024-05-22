@@ -78,7 +78,7 @@ class Computer(component.Component):
                 ),
             )
 
-        def load_from_addr_at_pc(dest: str) -> list[list[str]]:
+        def load_addr_at_pc() -> list[list[str]]:
             return steps(
                 *load_from_pc("controller.address_buffer.in"),
                 *load_from_pc("memory.address_low_byte.in"),
@@ -86,9 +86,23 @@ class Computer(component.Component):
                     "controller.address_buffer.out",
                     "memory.address_high_byte.in",
                 ),
+            )
+
+        def load_from_addr_at_pc(dest: str) -> list[list[str]]:
+            return steps(
+                *load_addr_at_pc(),
                 step(
                     "memory.out",
                     dest,
+                ),
+            )
+
+        def store_to_addr_at_pc(source: str) -> list[list[str]]:
+            return steps(
+                *load_addr_at_pc(),
+                step(
+                    source,
+                    "memory.in",
                 ),
             )
 
@@ -105,6 +119,11 @@ class Computer(component.Component):
             instruction(
                 0x02,
                 *load_from_addr_at_pc("a.in"),
+            ),
+            # sta mem
+            instruction(
+                0x03,
+                *store_to_addr_at_pc("a.out"),
             ),
         )
 
