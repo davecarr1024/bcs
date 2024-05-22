@@ -5,61 +5,43 @@ from pycom import bus, byte, component, controller, memory, program_counter, reg
 class Computer(component.Component):
     @classmethod
     def _controller_entries(cls) -> frozenset[controller.Controller.Entry]:
-        preamble = frozenset(
-            {
-                controller.Controller.Entry.build(
-                    None,
-                    0,
-                    "controller.instruction_counter.increment",
-                    "program_counter.high_byte.out",
-                    "memory.address_high_byte.in",
-                ),
-                controller.Controller.Entry.build(
-                    None,
-                    1,
-                    "controller.instruction_counter.increment",
-                    "program_counter.low_byte.out",
-                    "memory.address_low_byte.in",
-                ),
-                controller.Controller.Entry.build(
-                    None,
-                    2,
-                    "controller.instruction_counter.increment",
-                    "memory.out",
-                    "controller.instruction_buffer.in",
-                    "program_counter.increment",
-                ),
-            }
-        )
-
-        def instruction(
-            instruction: int, *steps: list[str]
-        ) -> frozenset[controller.Controller.Entry]:
-            steps_list: list[list[str]] = list(steps)
-            if not steps_list:
-                steps_list.append(["controller.instruction_counter.reset"])
-            else:
-                for step in steps_list[:-1]:
-                    if "controller.instruction_counter.increment" not in step:
-                        step.append("controller.instruction_counter.increment")
-                if "controller.instruction_counter.reset" not in steps_list[-1]:
-                    steps_list[-1].append("controller.instruction_counter.reset")
-            return frozenset(
-                {
-                    controller.Controller.Entry.build(
-                        instruction,
-                        instruction_counter + len(preamble),
-                        *step,
-                    )
-                    for instruction_counter, step in enumerate(steps_list)
-                }
-            )
 
         def step(*controls: str) -> list[str]:
             return list(controls)
 
         def steps(*steps: list[str]) -> list[list[str]]:
             return list(steps)
+
+        def entries(
+            instruction: typing.Optional[int],
+            starting_instruction_counter: int,
+            reset_instruction_counter: bool,
+            *steps: list[str],
+        ) -> frozenset[controller.Controller.Entry]:
+            steps_list: list[list[str]] = list(steps)
+            reset_control = "controller.instruction_counter.reset"
+            increment_control = "controller.instruction_counter.increment"
+            last_control = (
+                reset_control if reset_instruction_counter else increment_control
+            )
+            if not steps_list:
+                steps_list = [[last_control]]
+            else:
+                for step in steps_list[:-1]:
+                    if increment_control not in step:
+                        step.append(increment_control)
+                if last_control not in steps_list[-1]:
+                    steps_list[-1].append(last_control)
+            return frozenset(
+                {
+                    controller.Controller.Entry.build(
+                        instruction,
+                        instruction_counter + starting_instruction_counter,
+                        *step,
+                    )
+                    for instruction_counter, step in enumerate(steps_list)
+                }
+            )
 
         def load_from_pc(dest: str) -> list[list[str]]:
             return steps(
@@ -104,6 +86,24 @@ class Computer(component.Component):
                     source,
                     "memory.in",
                 ),
+            )
+
+        preamble = entries(
+            None,
+            0,
+            False,
+            *load_from_pc("controller.instruction_buffer.in"),
+        )
+
+        def instruction(
+            instruction: int,
+            *steps: list[str],
+        ) -> frozenset[controller.Controller.Entry]:
+            return entries(
+                instruction,
+                len(preamble),
+                True,
+                *steps,
             )
 
         return frozenset.union(
