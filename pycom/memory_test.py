@@ -1,5 +1,4 @@
 import unittest
-
 import pycom
 
 
@@ -52,6 +51,7 @@ class MemoryTest(unittest.TestCase):
         memory.address = 1
         memory.set_controls("in")
         bus.value = pycom.Byte(2)
+        self.assertEqual(memory.value, pycom.Byte(0))
         memory.update()
         self.assertDictEqual(memory.data, {1: pycom.Byte(2)})
 
@@ -60,5 +60,6 @@ class MemoryTest(unittest.TestCase):
         memory = pycom.Memory(bus, data={1: pycom.Byte(2)})
         memory.address = 1
         memory.set_controls("out")
+        self.assertEqual(bus.value, pycom.Byte(2))
         memory.update()
         self.assertEqual(bus.value, pycom.Byte(2))

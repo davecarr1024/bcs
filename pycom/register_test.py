@@ -1,5 +1,4 @@
 import unittest
-
 import pycom
 
 
@@ -22,6 +21,8 @@ class RegisterTest(unittest.TestCase):
         register.in_ = True
         bus.value = pycom.Byte(1)
         register.value = pycom.Byte(2)
+        self.assertEqual(bus.value, pycom.Byte(1))
+        self.assertEqual(register.value, pycom.Byte(2))
         register.update()
         self.assertEqual(bus.value, pycom.Byte(1))
         self.assertEqual(register.value, pycom.Byte(1))
@@ -32,6 +33,21 @@ class RegisterTest(unittest.TestCase):
         bus.value = pycom.Byte(1)
         register.value = pycom.Byte(2)
         register.out = True
+        self.assertEqual(bus.value, pycom.Byte(2))
+        self.assertEqual(register.value, pycom.Byte(2))
+        register.update()
+        self.assertEqual(bus.value, pycom.Byte(2))
+        self.assertEqual(register.value, pycom.Byte(2))
+
+    def test_in_and_out(self) -> None:
+        bus = pycom.Bus()
+        register = pycom.Register(bus, "a")
+        bus.value = pycom.Byte(1)
+        register.value = pycom.Byte(2)
+        register.in_ = True
+        register.out = True
+        self.assertEqual(bus.value, pycom.Byte(2))
+        self.assertEqual(register.value, pycom.Byte(2))
         register.update()
         self.assertEqual(bus.value, pycom.Byte(2))
         self.assertEqual(register.value, pycom.Byte(2))

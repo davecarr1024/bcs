@@ -44,6 +44,16 @@ class Component:
     def __hash__(self) -> int:
         return id(self)
 
+    @typing.final
+    def __str__(self) -> str:
+        return self._str(0)
+
+    def _str(self, indent: int = 0) -> str:
+        return f'\n{"  "*indent}{self._str_line()}{"".join(child._str(indent+1) for child in self.children)}'
+
+    def _str_line(self) -> str:
+        return self.name
+
     @contextlib.contextmanager
     def _pause_validation(self) -> typing.Iterator[None]:
         try:
@@ -111,7 +121,9 @@ class Component:
         match (dot_pos := name.find(".")):
             case -1:
                 if name not in self.children_by_name:
-                    raise self.ChildNotFoundError(f"unknown child {name}")
+                    raise self.ChildNotFoundError(
+                        f"unknown child {name}: children are {list(self.children_by_name.keys())} at {self.path}"
+                    )
                 return self.children_by_name[name]
             case _:
                 return self.child(name[:dot_pos]).child(name[dot_pos + 1 :])
@@ -131,13 +143,10 @@ class Component:
         self.control(name).value = value
 
     def set_controls(self, *names: str) -> None:
-        all_values: dict["control_lib.Control", bool] = {
-            control: False for control in self.all_controls
-        }
+        for control in self.all_controls:
+            control.value = False
         for name in names:
-            all_values[self.control(name)] = True
-        for control, value in all_values.items():
-            control.value = value
+            self.control(name).value = True
 
     @property
     def controls_by_name(self) -> typing.Mapping[str, "control_lib.Control"]:

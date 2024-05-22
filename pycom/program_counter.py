@@ -19,6 +19,10 @@ class ProgramCounter(component.Component):
             controls=frozenset({self._increment, self._reset}),
         )
 
+    @typing.override
+    def _str_line(self) -> str:
+        return f"ProgramCounter({self.value})"
+
     @property
     def low_byte(self) -> byte.Byte:
         return self._low_byte.value

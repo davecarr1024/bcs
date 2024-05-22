@@ -1,9 +1,5 @@
-import dataclasses
-import enum
 import typing
-
-from pycom import control
-from . import byte, bus, component
+from pycom import byte, bus, component, control
 
 
 class Register(component.Component):
@@ -16,8 +12,8 @@ class Register(component.Component):
         self.bus = bus
         self._value = byte.Byte()
         self._on_change = on_change
-        self._in = control.Control("in", lambda _: self._communicate())
-        self._out = control.Control("out", lambda _: self._communicate())
+        self._in = control.Control("in", lambda _: self._write())
+        self._out = control.Control("out", lambda _: self._write())
         component.Component.__init__(
             self,
             name,
@@ -29,18 +25,19 @@ class Register(component.Component):
             ),
         )
 
-    def __str__(self) -> str:
-        return f"{self.__class__.__name__}({self.name}={self.value})"
+    @typing.override
+    def _str_line(self) -> str:
+        return f"{self.name}={self.value}"
 
     @property
     def value(self) -> byte.Byte:
-        self._communicate()
+        self._write()
         return self._value
 
     @value.setter
     def value(self, value: byte.Byte) -> None:
         self._value = value
-        self._communicate()
+        self._write()
 
     @property
     def in_(self) -> bool:
@@ -49,7 +46,7 @@ class Register(component.Component):
     @in_.setter
     def in_(self, enable_in: bool) -> None:
         self._in.value = enable_in
-        self._communicate()
+        self._write()
 
     @property
     def out(self) -> bool:
@@ -58,18 +55,21 @@ class Register(component.Component):
     @out.setter
     def out(self, enable_out: bool) -> None:
         self._out.value = enable_out
-        self._communicate()
+        self._write()
 
     @typing.override
     def update(self) -> None:
-        self._communicate()
+        self._read()
+        self._write()
         super().update()
 
-    def _communicate(self) -> None:
+    def _read(self) -> None:
         if self.in_:
             old_value = self._value
             self._value = self.bus.value
             if old_value != self._value and self._on_change is not None:
                 self._on_change(self._value)
-        elif self.out:
+
+    def _write(self) -> None:
+        if self.out:
             self.bus.value = self._value
