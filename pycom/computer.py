@@ -18,8 +18,8 @@ class Computer(component.Component):
                     None,
                     1,
                     "controller.instruction_counter.increment",
-                    "program_counter.high_byte.out",
-                    "memory.address_high_byte.in",
+                    "program_counter.low_byte.out",
+                    "memory.address_low_byte.in",
                 ),
                 controller.Controller.Entry.build(
                     None,
@@ -33,9 +33,9 @@ class Computer(component.Component):
         )
 
         def instruction(
-            instruction: int, *steps_tuple: list[str]
+            instruction: int, *steps: list[str]
         ) -> frozenset[controller.Controller.Entry]:
-            steps_list: list[list[str]] = list(steps_tuple)
+            steps_list: list[list[str]] = list(steps)
             if not steps_list:
                 steps_list.append(["controller.instruction_counter.reset"])
             else:

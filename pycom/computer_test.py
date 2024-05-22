@@ -40,12 +40,14 @@ class ComputerTest(unittest.TestCase):
     def test_sta_memory(self) -> None:
         computer = pycom.Computer(
             data={
-                0: pycom.Byte(3),
-                1: pycom.Byte(0xBE),
-                2: pycom.Byte(0xEF),
+                0: pycom.Byte(1),
+                1: pycom.Byte(42),
+                2: pycom.Byte(3),
+                3: pycom.Byte(0xBE),
+                4: pycom.Byte(0xEF),
             }
         )
-        computer.a.value = pycom.Byte(42)
+        computer.controller.run_instruction()
         computer.controller.run_instruction()
         self.assertEqual(
             computer.memory.data[0xBEEF],

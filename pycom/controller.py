@@ -36,12 +36,12 @@ class Controller(component.Component):
         ) -> "Controller.Entry":
             return Controller.Entry(
                 instruction=(
-                    byte.Byte(instruction) if instruction is not None else byte.Byte()
+                    byte.Byte(instruction) if instruction is not None else None
                 ),
                 instruction_counter=(
                     byte.Byte(instruction_counter)
                     if instruction_counter is not None
-                    else byte.Byte()
+                    else None
                 ),
                 controls=frozenset(controls),
             )
@@ -101,7 +101,9 @@ class Controller(component.Component):
         print(f"controller state is {state}")
         entries = [entry for entry in self.entries if entry.matches(state)]
         if len(entries) != 1:
-            raise self.Error(f"invalid entries {entries} for state {state}")
+            raise self.Error(
+                f"invalid entries {entries} for state {state}: entries are {'\n'.join(map(str, self.entries))}"
+            )
         return entries[0]
 
     def apply(self) -> None:
