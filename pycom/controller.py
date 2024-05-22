@@ -123,3 +123,6 @@ class Controller(component.Component):
             self.root.update()
             updates += 1
         return updates
+
+    def run_instructions(self, num: int) -> int:
+        return sum(self.run_instruction() for _ in range(num))

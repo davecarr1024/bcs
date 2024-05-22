@@ -47,8 +47,7 @@ class ComputerTest(unittest.TestCase):
                 4: pycom.Byte(0xEF),
             }
         )
-        computer.controller.run_instruction()
-        computer.controller.run_instruction()
+        computer.controller.run_instructions(2)
         self.assertEqual(
             computer.memory.data[0xBEEF],
             pycom.Byte(42),
