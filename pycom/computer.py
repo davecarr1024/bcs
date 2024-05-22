@@ -6,32 +6,27 @@ class Computer(component.Component):
     @classmethod
     def _controller_entries(cls) -> frozenset[controller.Controller.Entry]:
 
-        def step(*controls: str) -> list[str]:
-            return list(controls)
+        def step(*controls: str) -> frozenset[str]:
+            return frozenset(controls)
 
-        def steps(*steps: list[str]) -> list[list[str]]:
+        def steps(*steps: frozenset[str]) -> list[frozenset[str]]:
             return list(steps)
 
         def entries(
             instruction: typing.Optional[int],
             starting_instruction_counter: int,
             reset_instruction_counter: bool,
-            *steps: list[str],
+            steps: list[frozenset[str]],
         ) -> frozenset[controller.Controller.Entry]:
-            steps_list: list[list[str]] = list(steps)
             reset_control = "controller.instruction_counter.reset"
             increment_control = "controller.instruction_counter.increment"
             last_control = (
                 reset_control if reset_instruction_counter else increment_control
             )
-            if not steps_list:
-                steps_list = [[last_control]]
-            else:
-                for step in steps_list[:-1]:
-                    if increment_control not in step:
-                        step.append(increment_control)
-                if last_control not in steps_list[-1]:
-                    steps_list[-1].append(last_control)
+            steps_list = [set(step) for step in steps] or [{last_control}]
+            for step in steps_list[:-1]:
+                step |= frozenset({increment_control})
+            steps_list[-1] |= frozenset({last_control})
             return frozenset(
                 {
                     controller.Controller.Entry.build(
@@ -43,7 +38,7 @@ class Computer(component.Component):
                 }
             )
 
-        def load_from_pc(dest: str) -> list[list[str]]:
+        def load_from_pc(dest: str) -> list[frozenset[str]]:
             return steps(
                 step(
                     "program_counter.high_byte.out",
@@ -60,7 +55,7 @@ class Computer(component.Component):
                 ),
             )
 
-        def load_addr_at_pc() -> list[list[str]]:
+        def load_addr_at_pc() -> list[frozenset[str]]:
             return steps(
                 *load_from_pc("controller.address_buffer.in"),
                 *load_from_pc("memory.address_low_byte.in"),
@@ -70,7 +65,7 @@ class Computer(component.Component):
                 ),
             )
 
-        def load_from_addr_at_pc(dest: str) -> list[list[str]]:
+        def load_from_addr_at_pc(dest: str) -> list[frozenset[str]]:
             return steps(
                 *load_addr_at_pc(),
                 step(
@@ -79,7 +74,7 @@ class Computer(component.Component):
                 ),
             )
 
-        def store_to_addr_at_pc(source: str) -> list[list[str]]:
+        def store_to_addr_at_pc(source: str) -> list[frozenset[str]]:
             return steps(
                 *load_addr_at_pc(),
                 step(
@@ -92,18 +87,18 @@ class Computer(component.Component):
             None,
             0,
             False,
-            *load_from_pc("controller.instruction_buffer.in"),
+            load_from_pc("controller.instruction_buffer.in"),
         )
 
         def instruction(
             instruction: int,
-            *steps: list[str],
+            *steps: frozenset[str],
         ) -> frozenset[controller.Controller.Entry]:
             return entries(
                 instruction,
                 len(preamble),
                 True,
-                *steps,
+                list(steps),
             )
 
         return frozenset.union(
