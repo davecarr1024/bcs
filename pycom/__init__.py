@@ -3,10 +3,11 @@ from .bus import Bus
 from .control import Control
 from .signal import Signal
 from .component import Component
+from .flag import Flag
 from .register import Register
 from .counter import Counter
 from .program_counter import ProgramCounter
 from .memory import Memory
 from .computer import Computer
 from .controller import Controller
-from .flag import Flag
+from .alu import ALU

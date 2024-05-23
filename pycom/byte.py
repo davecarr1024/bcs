@@ -10,6 +10,14 @@ class Byte(typing.Sized, typing.Iterable[bool]):
         result: "Byte"
         carry: bool
 
+        @property
+        def value(self) -> int:
+            return self.result.value + int(self.carry) * Byte.max()
+
+        @staticmethod
+        def for_value(value: int) -> "Byte.ResultWithCarry":
+            return Byte.ResultWithCarry(Byte(value), value >= Byte.max())
+
     @classmethod
     def size(cls) -> int:
         return 8
@@ -59,7 +67,7 @@ class Byte(typing.Sized, typing.Iterable[bool]):
     def __init__(self, value: int | typing.Sequence[bool] = 0) -> None:
         if isinstance(value, typing.Sequence):
             value = self.bits_to_int(value)
-        self.value = value
+        self._value = value % self.max()
 
     def __eq__(self, rhs: object) -> bool:
         match rhs:
@@ -82,28 +90,25 @@ class Byte(typing.Sized, typing.Iterable[bool]):
     def __repr__(self) -> str:
         return f"{self._value:#0{4}x}"
 
-    def __add__(self, rhs: "Byte") -> ResultWithCarry:
-        value = self.value + rhs.value
-        carry = value >= self.max()
-        return self.ResultWithCarry(Byte(value), carry)
+    @typing.overload
+    def __add__(self, rhs: "Byte") -> ResultWithCarry: ...
 
-    def increment(self) -> bool:
-        result_and_carry = self + Byte(1)
-        self.value = result_and_carry.result.value
-        return result_and_carry.carry
+    @typing.overload
+    def __add__(self, rhs: ResultWithCarry) -> ResultWithCarry: ...
+
+    def __add__(self, rhs: typing.Union["Byte", ResultWithCarry]) -> ResultWithCarry:
+        return self.ResultWithCarry.for_value(self.value + rhs.value)
+
+    def __radd__(self, lhs: ResultWithCarry) -> ResultWithCarry:
+        return self.ResultWithCarry.for_value(lhs.value + self.value)
+
+    def increment(self) -> ResultWithCarry:
+        return self + Byte(1)
 
     @property
     def value(self) -> int:
         return self._value
 
-    @value.setter
-    def value(self, value: int) -> None:
-        self._value = value % self.max()
-
     @property
     def bits(self) -> typing.Sequence[bool]:
         return self.int_to_bits(self._value)
-
-    @bits.setter
-    def bits(self, bits: typing.Sequence[bool]) -> None:
-        self._value = self.bits_to_int(bits)
