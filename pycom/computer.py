@@ -5,7 +5,6 @@ from pycom import bus, byte, component, controller, memory, program_counter, reg
 class Computer(component.Component):
     @classmethod
     def _controller_entries(cls) -> frozenset[controller.Controller.Entry]:
-
         def step(*controls: str) -> frozenset[str]:
             return frozenset(controls)
 

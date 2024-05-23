@@ -1,0 +1,3 @@
+class Errorable:
+    class Error(Exception):
+        ...

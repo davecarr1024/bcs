@@ -146,3 +146,45 @@ class ComponentTest(unittest.TestCase):
         b.set_controls("a.c2")
         self.assertFalse(c1.value)
         self.assertTrue(c2.value)
+
+    def test_signal(self) -> None:
+        s = pycom.Signal("s")
+        a = pycom.Component("a", signals=frozenset({s}))
+        self.assertSetEqual(a.signals, frozenset({s}))
+        self.assertDictEqual(a.signals_by_name, {"s": s})
+        self.assertIs(a.signal("s"), s)
+
+    def test_add_signal(self) -> None:
+        s = pycom.Signal("s")
+        a = pycom.Component("a")
+        a.add_signal(s)
+        self.assertIs(s.component, a)
+        self.assertSetEqual(a.signals, frozenset({s}))
+
+    def test_remove_signal(self) -> None:
+        s = pycom.Signal("s")
+        a = pycom.Component("a")
+        a.add_signal(s)
+        self.assertIs(s.component, a)
+        self.assertSetEqual(a.signals, frozenset({s}))
+        a.remove_signal(s)
+        self.assertIsNone(s.component)
+        self.assertSetEqual(a.signals, frozenset())
+
+    def test_signal_not_found(self) -> None:
+        with self.assertRaises(pycom.Component.SignalNotFoundError):
+            pycom.Component("a").signal("s")
+
+    def test_child_signal(self) -> None:
+        s = pycom.Signal("s")
+        b = pycom.Component("b", signals=frozenset({s}))
+        a = pycom.Component("a", children=frozenset({b}))
+        self.assertIs(a.signal("b.s"), s)
+
+    def test_all_signals(self) -> None:
+        c1 = pycom.Signal("c1")
+        c2 = pycom.Signal("c2")
+        c3 = pycom.Signal("c3")
+        a = pycom.Component("a", signals=frozenset({c1, c2}))
+        b = pycom.Component("b", children=frozenset({a}), signals=frozenset({c3}))
+        self.assertSetEqual(b.all_signals, frozenset({c1, c2, c3}))

@@ -1,6 +1,7 @@
 from .byte import Byte
 from .bus import Bus
 from .control import Control
+from .signal import Signal
 from .component import Component
 from .register import Register
 from .counter import Counter

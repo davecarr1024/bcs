@@ -1,14 +1,10 @@
 import contextlib
 import typing
 
+from pycom import validatable
 
-class Control:
-    class Error(Exception):
-        ...
 
-    class ValidationError(Exception):
-        ...
-
+class Control(validatable.Validatable):
     def __init__(
         self,
         name: str,
@@ -16,6 +12,7 @@ class Control:
         *,
         component: typing.Optional["component_lib.Component"] = None,
     ) -> None:
+        super().__init__()
         self.__name = name
         self.__value = False
         self.__on_change = on_change
@@ -24,23 +21,7 @@ class Control:
         if component is not None:
             self.component = component
 
-    @property
-    def _validation_enabled(self) -> bool:
-        return self.__pause_validation_count == 0
-
-    @contextlib.contextmanager
-    def _pause_validation(self) -> typing.Iterator[None]:
-        try:
-            self.__pause_validation_count += 1
-            yield
-        finally:
-            self.__pause_validation_count -= 1
-            self._validate_if_enabled()
-
-    def _validate_if_enabled(self) -> None:
-        if self._validation_enabled:
-            self.validate()
-
+    @typing.override
     def validate(self) -> None:
         if self.component is not None and self not in self.component.controls:
             raise self.ValidationError(
