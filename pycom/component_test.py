@@ -88,7 +88,7 @@ class ComponentTest(unittest.TestCase):
 
     def test_control(self) -> None:
         c = pycom.Control("c")
-        a = pycom.Component("a", controls=frozenset({c}))
+        a = pycom.Component("a", controls=(c,))
         self.assertSetEqual(a.controls, frozenset({c}))
         self.assertDictEqual(a.controls_by_name, {"c": c})
         self.assertIs(a.control("c"), c)
@@ -116,30 +116,30 @@ class ComponentTest(unittest.TestCase):
 
     def test_child_control(self) -> None:
         c = pycom.Control("c")
-        b = pycom.Component("b", controls=frozenset({c}))
-        a = pycom.Component("a", children=frozenset({b}))
+        b = pycom.Component("b", controls=(c,))
+        a = pycom.Component("a", children=[b])
         self.assertIs(a.control("b.c"), c)
 
     def test_all_controls(self) -> None:
         c1 = pycom.Control("c1")
         c2 = pycom.Control("c2")
         c3 = pycom.Control("c3")
-        a = pycom.Component("a", controls=frozenset({c1, c2}))
-        b = pycom.Component("b", children=frozenset({a}), controls=frozenset({c3}))
+        a = pycom.Component("a", controls=[c1, c2])
+        b = pycom.Component("b", children=[a], controls=[c3])
         self.assertSetEqual(b.all_controls, frozenset({c1, c2, c3}))
 
     def test_set_control(self) -> None:
         c = pycom.Control("c")
-        a = pycom.Component("a", controls=frozenset({c}))
-        b = pycom.Component("b", children=frozenset({a}))
+        a = pycom.Component("a", controls=(c,))
+        b = pycom.Component("b", children=[a])
         b.set_control("a.c", True)
         self.assertTrue(c.value)
 
     def test_set_controls(self) -> None:
         c1 = pycom.Control("c1")
         c2 = pycom.Control("c2")
-        a = pycom.Component("a", controls=frozenset({c1, c2}))
-        b = pycom.Component("b", children=frozenset({a}))
+        a = pycom.Component("a", controls=[c1, c2])
+        b = pycom.Component("b", children=[a])
         b.set_controls("a.c1")
         self.assertTrue(c1.value)
         self.assertFalse(c2.value)
@@ -149,7 +149,7 @@ class ComponentTest(unittest.TestCase):
 
     def test_signal(self) -> None:
         s = pycom.Signal("s")
-        a = pycom.Component("a", signals=frozenset({s}))
+        a = pycom.Component("a", signals=(s,))
         self.assertSetEqual(a.signals, frozenset({s}))
         self.assertDictEqual(a.signals_by_name, {"s": s})
         self.assertIs(a.signal("s"), s)
@@ -177,14 +177,14 @@ class ComponentTest(unittest.TestCase):
 
     def test_child_signal(self) -> None:
         s = pycom.Signal("s")
-        b = pycom.Component("b", signals=frozenset({s}))
-        a = pycom.Component("a", children=frozenset({b}))
+        b = pycom.Component("b", signals=(s,))
+        a = pycom.Component("a", children=[b])
         self.assertIs(a.signal("b.s"), s)
 
     def test_all_signals(self) -> None:
         c1 = pycom.Signal("c1")
         c2 = pycom.Signal("c2")
         c3 = pycom.Signal("c3")
-        a = pycom.Component("a", signals=frozenset({c1, c2}))
-        b = pycom.Component("b", children=frozenset({a}), signals=frozenset({c3}))
+        a = pycom.Component("a", signals=[c1, c2])
+        b = pycom.Component("b", children=[a], signals=[c3])
         self.assertSetEqual(b.all_signals, frozenset({c1, c2, c3}))

@@ -9,3 +9,4 @@ from .program_counter import ProgramCounter
 from .memory import Memory
 from .computer import Computer
 from .controller import Controller
+from .flag import Flag

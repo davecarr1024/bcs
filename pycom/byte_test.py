@@ -69,14 +69,16 @@ class ByteTest(unittest.TestCase):
                 )
 
     def test_eq(self) -> None:
-        for lhs, rhs, expected in list[tuple[int, int, bool]](
+        for lhs, rhs, expected in list[tuple[pycom.Byte, pycom.Byte | int, bool]](
             [
-                (1, 1, True),
-                (1, 2, False),
+                (pycom.Byte(1), pycom.Byte(1), True),
+                (pycom.Byte(1), pycom.Byte(2), False),
+                (pycom.Byte(1), 1, True),
+                (pycom.Byte(1), 2, False),
             ]
         ):
             with self.subTest(lhs=lhs, rhs=rhs, expected=expected):
-                self.assertEqual(expected, pycom.Byte(lhs) == pycom.Byte(rhs))
+                self.assertEqual(lhs == rhs, expected)
 
     def test_wrap(self) -> None:
         self.assertEqual(pycom.Byte(0), pycom.Byte(256))

@@ -16,9 +16,9 @@ class Component(validatable.Validatable):
         name: str,
         *,
         parent: typing.Optional["Component"] = None,
-        children: typing.Optional[frozenset["Component"]] = None,
-        controls: typing.Optional[frozenset["control_lib.Control"]] = None,
-        signals: typing.Optional[frozenset["signal_lib.Signal"]] = None,
+        children: typing.Optional[typing.Iterable["Component"]] = None,
+        controls: typing.Optional[typing.Iterable["control_lib.Control"]] = None,
+        signals: typing.Optional[typing.Iterable["signal_lib.Signal"]] = None,
     ) -> None:
         super().__init__()
         self.__name = name
