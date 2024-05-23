@@ -25,8 +25,8 @@ class Computer(component.Component):
             )
             steps_list = [set(step) for step in steps] or [{last_control}]
             for step in steps_list[:-1]:
-                step |= frozenset({increment_control})
-            steps_list[-1] |= frozenset({last_control})
+                step |= {increment_control}
+            steps_list[-1] |= {last_control}
             return frozenset(
                 {
                     controller.Controller.Entry.build(
