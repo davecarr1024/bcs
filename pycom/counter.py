@@ -8,8 +8,14 @@ class Counter(register.Register):
         bus: bus.Bus,
         name: str,
         on_change: typing.Optional[typing.Callable[[byte.Byte], None]] = None,
+        value: int = 0,
     ) -> None:
-        super().__init__(bus, name, on_change)
+        super().__init__(
+            bus,
+            name,
+            on_change,
+            value,
+        )
         self._increment = control.Control(
             "increment",
             component=self,
@@ -38,7 +44,7 @@ class Counter(register.Register):
     @typing.override
     def update(self) -> None:
         if self.increment:
-            self.value = byte.Byte(self.value.value + 1)
+            self.value += 1
         elif self.reset:
-            self.value = byte.Byte()
+            self.value = 0
         super().update()

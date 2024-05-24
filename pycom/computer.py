@@ -125,7 +125,7 @@ class Computer(component.Component):
         self,
         name: typing.Optional[str] = None,
         *,
-        data: typing.Optional[typing.Mapping[int, byte.Byte]] = None,
+        data: typing.Optional[typing.Mapping[int, int]] = None,
     ) -> None:
         self.bus = bus.Bus()
         self.a = register.Register(self.bus, "a")

@@ -24,28 +24,29 @@ class ProgramCounter(component.Component):
         return f"{self.name}({self.value})"
 
     @property
-    def low_byte(self) -> byte.Byte:
+    def low_byte(self) -> int:
         return self._low_byte.value
 
     @low_byte.setter
-    def low_byte(self, low: byte.Byte) -> None:
+    def low_byte(self, low: int) -> None:
         self._low_byte.value = low
 
     @property
-    def high_byte(self) -> byte.Byte:
+    def high_byte(self) -> int:
         return self._high_byte.value
 
     @high_byte.setter
-    def high_byte(self, high: byte.Byte) -> None:
+    def high_byte(self, high: int) -> None:
         self._high_byte.value = high
 
     @property
     def value(self) -> int:
-        return byte.Byte.bytes_to_int(self.high_byte, self.low_byte)
+        return (self.high_byte << byte.Byte.size()) | self.low_byte
 
     @value.setter
     def value(self, value: int) -> None:
-        self.high_byte, self.low_byte, *_ = byte.Byte.int_to_bytes(value)
+        self.high_byte = value >> byte.Byte.size()
+        self.low_byte = value
 
     @property
     def increment(self) -> bool:

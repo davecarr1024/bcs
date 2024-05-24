@@ -1,23 +1,12 @@
-import dataclasses
 import typing
+from pycom import errorable
 
 
-class Byte(typing.Sized, typing.Iterable[bool]):
-    class Error(Exception): ...
-
-    @dataclasses.dataclass(frozen=True)
-    class ResultWithCarry:
-        result: "Byte"
-        carry: bool
-
-        @property
-        def value(self) -> int:
-            return self.result.value + int(self.carry) * Byte.max()
-
-        @staticmethod
-        def for_value(value: int) -> "Byte.ResultWithCarry":
-            return Byte.ResultWithCarry(Byte(value), value >= Byte.max())
-
+class Byte(
+    errorable.Errorable,
+    typing.Sized,
+    typing.Iterable[bool],
+):
     @classmethod
     def size(cls) -> int:
         return 8
@@ -89,21 +78,6 @@ class Byte(typing.Sized, typing.Iterable[bool]):
 
     def __repr__(self) -> str:
         return f"{self._value:#0{4}x}"
-
-    @typing.overload
-    def __add__(self, rhs: "Byte") -> ResultWithCarry: ...
-
-    @typing.overload
-    def __add__(self, rhs: ResultWithCarry) -> ResultWithCarry: ...
-
-    def __add__(self, rhs: typing.Union["Byte", ResultWithCarry]) -> ResultWithCarry:
-        return self.ResultWithCarry.for_value(self.value + rhs.value)
-
-    def __radd__(self, lhs: ResultWithCarry) -> ResultWithCarry:
-        return self.ResultWithCarry.for_value(lhs.value + self.value)
-
-    def increment(self) -> ResultWithCarry:
-        return self + Byte(1)
 
     @property
     def value(self) -> int:

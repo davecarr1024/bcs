@@ -8,9 +8,10 @@ class Register(component.Component):
         bus: bus.Bus,
         name: str,
         on_change: typing.Optional[typing.Callable[[byte.Byte], None]] = None,
+        value: int = 0,
     ) -> None:
         self.bus = bus
-        self._value = byte.Byte()
+        self.__value = byte.Byte(value)
         self._on_change = on_change
         self._in = control.Control("in", lambda _: self._write())
         self._out = control.Control("out", lambda _: self._write())
@@ -30,13 +31,13 @@ class Register(component.Component):
         return f"{self.name}={self.value}"
 
     @property
-    def value(self) -> byte.Byte:
+    def value(self) -> int:
         self._write()
-        return self._value
+        return self.__value.value
 
     @value.setter
-    def value(self, value: byte.Byte) -> None:
-        self._value = value
+    def value(self, value: int) -> None:
+        self.__value = byte.Byte(value)
         self._write()
 
     @property
@@ -65,11 +66,11 @@ class Register(component.Component):
 
     def _read(self) -> None:
         if self.in_:
-            old_value = self._value
-            self._value = self.bus.value
-            if old_value != self._value and self._on_change is not None:
-                self._on_change(self._value)
+            old_value = self.__value
+            self.__value = byte.Byte(self.bus.value)
+            if old_value != self.__value and self._on_change is not None:
+                self._on_change(self.__value)
 
     def _write(self) -> None:
         if self.out:
-            self.bus.value = self._value
+            self.bus.value = self.__value.value

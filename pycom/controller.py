@@ -6,14 +6,14 @@ from pycom import bus, byte, component, counter, register
 class Controller(component.Component):
     @dataclasses.dataclass(frozen=True)
     class State:
-        instruction: byte.Byte
-        instruction_counter: byte.Byte
+        instruction: int
+        instruction_counter: int
 
-    @dataclasses.dataclass(frozen=True, kw_only=True)
+    @dataclasses.dataclass(frozen=True)
     class Entry:
-        instruction: typing.Optional[byte.Byte] = None
-        instruction_counter: typing.Optional[byte.Byte] = None
-        controls: frozenset[str]
+        instruction: typing.Optional[int] = None
+        instruction_counter: typing.Optional[int] = None
+        controls: frozenset[str] = dataclasses.field(default_factory=frozenset)
 
         def __str__(self) -> str:
             return f"{self.instruction or '*'}.{self.instruction_counter or '*'} {','.join(self.controls)}"
@@ -35,15 +35,11 @@ class Controller(component.Component):
             *controls: str,
         ) -> "Controller.Entry":
             return Controller.Entry(
-                instruction=(
-                    byte.Byte(instruction) if instruction is not None else None
+                instruction,
+                instruction_counter,
+                frozenset(
+                    controls,
                 ),
-                instruction_counter=(
-                    byte.Byte(instruction_counter)
-                    if instruction_counter is not None
-                    else None
-                ),
-                controls=frozenset(controls),
             )
 
     def __init__(
@@ -69,19 +65,19 @@ class Controller(component.Component):
         )
 
     @property
-    def instruction_buffer(self) -> byte.Byte:
+    def instruction_buffer(self) -> int:
         return self._instruction_buffer.value
 
     @instruction_buffer.setter
-    def instruction_buffer(self, instruction_buffer: byte.Byte) -> None:
+    def instruction_buffer(self, instruction_buffer: int) -> None:
         self._instruction_buffer.value = instruction_buffer
 
     @property
-    def instruction_counter(self) -> byte.Byte:
+    def instruction_counter(self) -> int:
         return self._instruction_counter.value
 
     @instruction_counter.setter
-    def instruction_counter(self, instruction_counter: byte.Byte) -> None:
+    def instruction_counter(self, instruction_counter: int) -> None:
         self._instruction_counter.value = instruction_counter
 
     @property
@@ -119,7 +115,7 @@ class Controller(component.Component):
     def run_instruction(self) -> int:
         self.root.update()
         updates = 1
-        while self.instruction_counter.value:
+        while self.instruction_counter:
             self.root.update()
             updates += 1
         return updates

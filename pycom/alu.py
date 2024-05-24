@@ -28,27 +28,27 @@ class ALU(component.Component):
         )
 
     @property
-    def lhs(self) -> byte.Byte:
+    def lhs(self) -> int:
         return self.__lhs.value
 
     @lhs.setter
-    def lhs(self, lhs: byte.Byte) -> None:
+    def lhs(self, lhs: int) -> None:
         self.__lhs.value = lhs
 
     @property
-    def rhs(self) -> byte.Byte:
+    def rhs(self) -> int:
         return self.__rhs.value
 
     @rhs.setter
-    def rhs(self, rhs: byte.Byte) -> None:
+    def rhs(self, rhs: int) -> None:
         self.__rhs.value = rhs
 
     @property
-    def result(self) -> byte.Byte:
+    def result(self) -> int:
         return self.__result.value
 
     @result.setter
-    def result(self, result: byte.Byte) -> None:
+    def result(self, result: int) -> None:
         self.__result.value = result
 
     @property
@@ -70,6 +70,5 @@ class ALU(component.Component):
     def update(self) -> None:
         super().update()
         if self.add:
-            result_with_carry = byte.Byte(int(self.carry)) + self.lhs + self.rhs
-            self.carry = result_with_carry.carry
-            self.result = result_with_carry.result
+            self.result = result = int(self.carry) + self.lhs + self.rhs
+            self.carry = result >= byte.Byte.max()
