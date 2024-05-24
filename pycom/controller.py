@@ -1,15 +1,23 @@
 import dataclasses
 import typing
-from pycom import bus, byte, component, counter, register
+from pycom import bus, component, counter, errorable, register
 
 
 class Controller(component.Component):
-    @dataclasses.dataclass(frozen=True)
+    class EntryError(errorable.Errorable.Error, KeyError): ...
+
+    @dataclasses.dataclass(
+        frozen=True,
+        kw_only=True,
+    )
     class State:
         instruction: int
         instruction_counter: int
 
-    @dataclasses.dataclass(frozen=True)
+    @dataclasses.dataclass(
+        frozen=True,
+        kw_only=True,
+    )
     class Entry:
         instruction: typing.Optional[int] = None
         instruction_counter: typing.Optional[int] = None
@@ -25,21 +33,6 @@ class Controller(component.Component):
                     self.instruction_counter is None
                     or self.instruction_counter == state.instruction_counter,
                 )
-            )
-
-        @classmethod
-        def build(
-            cls,
-            instruction: typing.Optional[int] = None,
-            instruction_counter: typing.Optional[int] = None,
-            *controls: str,
-        ) -> "Controller.Entry":
-            return Controller.Entry(
-                instruction,
-                instruction_counter,
-                frozenset(
-                    controls,
-                ),
             )
 
     def __init__(
@@ -83,8 +76,8 @@ class Controller(component.Component):
     @property
     def state(self) -> State:
         return self.State(
-            self.instruction_buffer,
-            self.instruction_counter,
+            instruction=self.instruction_buffer,
+            instruction_counter=self.instruction_counter,
         )
 
     @property
@@ -96,8 +89,9 @@ class Controller(component.Component):
         state = self.state
         print(f"controller state is {state}")
         entries = [entry for entry in self.entries if entry.matches(state)]
+        print(f"matched entries {entries}")
         if len(entries) != 1:
-            raise self.Error(
+            raise self.EntryError(
                 f"invalid entries {entries} for state {state}: entries are {'\n'.join(map(str, self.entries))}"
             )
         return entries[0]

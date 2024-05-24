@@ -28,10 +28,11 @@ class Computer(component.Component):
             steps_list[-1] |= {last_control}
             return frozenset(
                 {
-                    controller.Controller.Entry.build(
-                        instruction,
-                        instruction_counter + starting_instruction_counter,
-                        *step,
+                    controller.Controller.Entry(
+                        instruction=instruction,
+                        instruction_counter=instruction_counter
+                        + starting_instruction_counter,
+                        controls=frozenset(step),
                     )
                     for instruction_counter, step in enumerate(steps_list)
                 }
