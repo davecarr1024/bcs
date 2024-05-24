@@ -6,8 +6,7 @@ from pycom import errorable
 
 
 class Validatable(abc.ABC, errorable.Errorable):
-    class ValidationError(errorable.Errorable.Error):
-        ...
+    class ValidationError(errorable.Errorable.Error): ...
 
     def __init__(self) -> None:
         self.__pause_validation_count = 0
@@ -33,5 +32,4 @@ class Validatable(abc.ABC, errorable.Errorable):
             self.validate()
 
     @abc.abstractmethod
-    def validate(self) -> None:
-        ...
+    def validate(self) -> None: ...
