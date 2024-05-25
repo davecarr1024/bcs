@@ -2,7 +2,6 @@ import typing
 from pycom import (
     alu,
     bus,
-    byte,
     component,
     controller,
     memory,
