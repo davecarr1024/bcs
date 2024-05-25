@@ -11,10 +11,13 @@ from pycom import (
 
 
 class Computer(component.Component):
-    NOP = 0x00
-    LDA_IMMEDIATE = 0x01
-    LDA_MEMORY = 0x02
-    STA_MEMORY = 0x03
+    NOP = 0xEA
+    LDA_IMMEDIATE = 0xA9
+    LDA_ABSOLUTE = 0xAD
+    STA_ABSOLUTE = 0x8D
+    SEC = 0x38
+    CLC = 0x18
+    ADC_IMMEDIATE = 0x69
 
     @classmethod
     def _controller_entries(cls) -> frozenset[controller.Controller.Entry]:
@@ -121,12 +124,39 @@ class Computer(component.Component):
                 *load_from_pc("a.in"),
             ),
             instruction(
-                cls.LDA_MEMORY,
+                cls.LDA_ABSOLUTE,
                 *load_from_addr_at_pc("a.in"),
             ),
             instruction(
-                cls.STA_MEMORY,
+                cls.STA_ABSOLUTE,
                 *store_to_addr_at_pc("a.out"),
+            ),
+            instruction(
+                cls.CLC,
+                step(
+                    "alu.carry_clear",
+                ),
+            ),
+            instruction(
+                cls.SEC,
+                step(
+                    "alu.carry_set",
+                ),
+            ),
+            instruction(
+                cls.ADC_IMMEDIATE,
+                *load_from_pc("alu.lhs.in"),
+                step(
+                    "a.out",
+                    "alu.rhs.in",
+                ),
+                step(
+                    "alu.add",
+                ),
+                step(
+                    "alu.result.out",
+                    "a.in",
+                ),
             ),
         )
 
@@ -137,8 +167,8 @@ class Computer(component.Component):
         data: typing.Optional[typing.Mapping[int, int]] = None,
     ) -> None:
         self.bus = bus.Bus()
-        self.a = register.Register(self.bus, "a")
-        self.instruction_buffer = register.Register(self.bus, "instruction_buffer")
+        self.__a = register.Register(self.bus, "a")
+        self.__instruction_buffer = register.Register(self.bus, "instruction_buffer")
         self.memory = memory.Memory(self.bus, data=data)
         self.program_counter = program_counter.ProgramCounter(self.bus)
         self.controller = controller.Controller(self.bus, self._controller_entries())
@@ -147,8 +177,8 @@ class Computer(component.Component):
             name or "computer",
             children=frozenset(
                 {
-                    self.a,
-                    self.instruction_buffer,
+                    self.__a,
+                    self.__instruction_buffer,
                     self.memory,
                     self.program_counter,
                     self.controller,
@@ -157,10 +187,32 @@ class Computer(component.Component):
             ),
         )
 
+    @property
+    def a(self) -> int:
+        return self.__a.value
+
+    @a.setter
+    def a(self, a: int) -> None:
+        self.__a.value = a
+
     @typing.override
     def _str_line(self) -> str:
         return f"Computer(bus={self.bus})"
 
+    @property
+    def status(self) -> int:
+        return self.alu.status
+
+    @status.setter
+    def status(self, status: int) -> None:
+        self.alu.status = status
+
     def update(self) -> None:
-        self.controller.apply(self.alu.status)
+        self.controller.apply(self.status)
         super().update()
+
+    def run_instruction(self) -> int:
+        return self.controller.run_instruction()
+
+    def run_instructions(self, num: int) -> int:
+        return self.controller.run_instructions(num)

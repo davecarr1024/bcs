@@ -24,6 +24,20 @@ class ALUTest(unittest.TestCase):
             0,
         )
 
+    def test_carry_set(self) -> None:
+        alu = pycom.ALU(pycom.Bus())
+        alu.carry = False
+        alu.set_controls("carry_set")
+        alu.update()
+        self.assertTrue(alu.carry)
+
+    def test_carry_clear(self) -> None:
+        alu = pycom.ALU(pycom.Bus())
+        alu.carry = True
+        alu.set_controls("carry_clear")
+        alu.update()
+        self.assertFalse(alu.carry)
+
     def test_idle(self) -> None:
         alu = pycom.ALU(pycom.Bus())
         alu.lhs = 1

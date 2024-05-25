@@ -16,6 +16,8 @@ class ALU(component.Component):
         self.__result = register.Register(self.bus, "result")
         self.__status = register.Register(self.bus, "status")
         self.__add = control.Control("add")
+        self.__carry_set = control.Control("carry_set")
+        self.__carry_clear = control.Control("carry_clear")
         super().__init__(
             name or "alu",
             children=[
@@ -26,6 +28,8 @@ class ALU(component.Component):
             ],
             controls=[
                 self.__add,
+                self.__carry_set,
+                self.__carry_clear,
             ],
         )
 
@@ -87,5 +91,10 @@ class ALU(component.Component):
     @typing.override
     def update(self) -> None:
         super().update()
+        if self.__carry_set.value:
+            self.carry = True
+        elif self.__carry_clear.value:
+            self.carry = False
+
         if self.add:
             self._set_result_and_status(int(self.carry) + self.lhs + self.rhs)
