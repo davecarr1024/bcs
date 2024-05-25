@@ -1,3 +1,4 @@
+from stringprep import c22_specials
 import unittest
 import pycom
 
@@ -181,6 +182,13 @@ class ComponentTest(unittest.TestCase):
         a = pycom.Component("a", children=[b])
         self.assertIs(a.signal("b.s"), s)
 
+    def test_duplicate_signals(self) -> None:
+        c1 = pycom.Signal("c")
+        c2 = pycom.Signal("c")
+        a = pycom.Component("a", signals=[c1])
+        with self.assertRaises(pycom.Component.ValidationError):
+            pycom.Component("b", children=[a], signals=[c2])
+
     def test_all_signals(self) -> None:
         c1 = pycom.Signal("c1")
         c2 = pycom.Signal("c2")
@@ -188,3 +196,11 @@ class ComponentTest(unittest.TestCase):
         a = pycom.Component("a", signals=[c1, c2])
         b = pycom.Component("b", children=[a], signals=[c3])
         self.assertSetEqual(b.all_signals, frozenset({c1, c2, c3}))
+        self.assertDictEqual(
+            b.all_signals_by_name,
+            {
+                "c1": c1,
+                "c2": c2,
+                "c3": c3,
+            },
+        )

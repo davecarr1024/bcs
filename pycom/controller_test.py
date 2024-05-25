@@ -122,3 +122,14 @@ class ControllerTest(unittest.TestCase):
                     }
                 ),
             ).entry
+
+    def test_unknown_signal(self) -> None:
+        with self.assertRaises(pycom.Controller.ValidationError):
+            pycom.Controller(
+                pycom.Bus(),
+                entries=[
+                    pycom.Controller.Entry(
+                        signals=pycom.Controller.SignalValueMap.build(a=True),
+                    )
+                ],
+            )

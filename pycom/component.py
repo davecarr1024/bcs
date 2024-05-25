@@ -169,6 +169,10 @@ class Component(validatable.Validatable):
         return frozenset(signals)
 
     @property
+    def all_signals_by_name(self) -> typing.Mapping[str, "signal_lib.Signal"]:
+        return {signal.name: signal for signal in self.all_signals}
+
+    @property
     def signals_by_name(self) -> typing.Mapping[str, "signal_lib.Signal"]:
         return {signal.name: signal for signal in self.signals}
 
@@ -214,6 +218,8 @@ class Component(validatable.Validatable):
             if self is not signal.component:
                 raise self.ValidationError(f"signal {signal} not in component {self}")
             signal.validate()
+        if len(self.all_signals_by_name) != len(self.all_signals):
+            raise self.ValidationError(f"duplicate descendant signal")
         for child in self.children:
             child.validate()
 
