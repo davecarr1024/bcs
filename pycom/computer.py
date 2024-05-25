@@ -1,3 +1,5 @@
+import dataclasses
+import enum
 import typing
 from pycom import (
     alu,
@@ -11,13 +13,14 @@ from pycom import (
 
 
 class Computer(component.Component):
-    NOP = 0xEA
-    LDA_IMMEDIATE = 0xA9
-    LDA_ABSOLUTE = 0xAD
-    STA_ABSOLUTE = 0x8D
-    SEC = 0x38
-    CLC = 0x18
-    ADC_IMMEDIATE = 0x69
+    class Opcode(enum.Enum):
+        NOP = 0xEA
+        LDA_IMMEDIATE = 0xA9
+        LDA_ABSOLUTE = 0xAD
+        STA_ABSOLUTE = 0x8D
+        SEC = 0x38
+        CLC = 0x18
+        ADC_IMMEDIATE = 0x69
 
     @classmethod
     def _controller_entries(cls) -> frozenset[controller.Controller.Entry]:
@@ -107,44 +110,44 @@ class Computer(component.Component):
         )
 
         def instruction(
-            instruction: int,
+            opcode: Computer.Opcode,
             *steps: frozenset[str],
         ) -> frozenset[controller.Controller.Entry]:
             return preamble | entries(
-                instruction,
+                opcode.value,
                 len(preamble),
                 True,
                 list(steps),
             )
 
         return frozenset.union(
-            instruction(cls.NOP),
+            instruction(cls.Opcode.NOP),
             instruction(
-                cls.LDA_IMMEDIATE,
+                cls.Opcode.LDA_IMMEDIATE,
                 *load_from_pc("a.in"),
             ),
             instruction(
-                cls.LDA_ABSOLUTE,
+                cls.Opcode.LDA_ABSOLUTE,
                 *load_from_addr_at_pc("a.in"),
             ),
             instruction(
-                cls.STA_ABSOLUTE,
+                cls.Opcode.STA_ABSOLUTE,
                 *store_to_addr_at_pc("a.out"),
             ),
             instruction(
-                cls.CLC,
+                cls.Opcode.CLC,
                 step(
                     "alu.carry_clear",
                 ),
             ),
             instruction(
-                cls.SEC,
+                cls.Opcode.SEC,
                 step(
                     "alu.carry_set",
                 ),
             ),
             instruction(
-                cls.ADC_IMMEDIATE,
+                cls.Opcode.ADC_IMMEDIATE,
                 *load_from_pc("alu.lhs.in"),
                 step(
                     "a.out",
@@ -170,7 +173,7 @@ class Computer(component.Component):
         self.__a = register.Register(self.bus, "a")
         self.__instruction_buffer = register.Register(self.bus, "instruction_buffer")
         self.memory = memory.Memory(self.bus, data=data)
-        self.program_counter = program_counter.ProgramCounter(self.bus)
+        self.__program_counter = program_counter.ProgramCounter(self.bus)
         self.controller = controller.Controller(self.bus, self._controller_entries())
         self.alu = alu.ALU(self.bus)
         super().__init__(
@@ -180,12 +183,20 @@ class Computer(component.Component):
                     self.__a,
                     self.__instruction_buffer,
                     self.memory,
-                    self.program_counter,
+                    self.__program_counter,
                     self.controller,
                     self.alu,
                 }
             ),
         )
+
+    @property
+    def program_counter(self) -> int:
+        return self.__program_counter.value
+
+    @program_counter.setter
+    def program_counter(self, program_counter: int) -> None:
+        self.__program_counter.value = program_counter
 
     @property
     def a(self) -> int:
