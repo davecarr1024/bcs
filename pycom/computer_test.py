@@ -18,7 +18,7 @@ class ComputerTest(unittest.TestCase):
     def test_lda_immediate(self) -> None:
         computer = pycom.Computer(
             data={
-                0: 1,
+                0: pycom.Computer.LDA_IMMEDIATE,
                 1: 2,
             }
         )
@@ -28,7 +28,7 @@ class ComputerTest(unittest.TestCase):
     def test_lda_memory(self) -> None:
         computer = pycom.Computer(
             data={
-                0: 2,
+                0: pycom.Computer.LDA_MEMORY,
                 1: 0xBE,
                 2: 0xEF,
                 0xBEEF: 42,
@@ -40,9 +40,9 @@ class ComputerTest(unittest.TestCase):
     def test_sta_memory(self) -> None:
         computer = pycom.Computer(
             data={
-                0: 1,
+                0: pycom.Computer.LDA_IMMEDIATE,
                 1: 42,
-                2: 3,
+                2: pycom.Computer.STA_MEMORY,
                 3: 0xBE,
                 4: 0xEF,
             }

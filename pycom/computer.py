@@ -12,6 +12,11 @@ from pycom import (
 
 
 class Computer(component.Component):
+    NOP = 0x00
+    LDA_IMMEDIATE = 0x01
+    LDA_MEMORY = 0x02
+    STA_MEMORY = 0x03
+
     @classmethod
     def _controller_entries(cls) -> frozenset[controller.Controller.Entry]:
         def step(*controls: str) -> frozenset[str]:
@@ -103,7 +108,7 @@ class Computer(component.Component):
             instruction: int,
             *steps: frozenset[str],
         ) -> frozenset[controller.Controller.Entry]:
-            return entries(
+            return preamble | entries(
                 instruction,
                 len(preamble),
                 True,
@@ -111,22 +116,17 @@ class Computer(component.Component):
             )
 
         return frozenset.union(
-            preamble,
-            # nop
-            instruction(0x00),
-            # lda immediate
+            instruction(cls.NOP),
             instruction(
-                0x01,
+                cls.LDA_IMMEDIATE,
                 *load_from_pc("a.in"),
             ),
-            # lda mem
             instruction(
-                0x02,
+                cls.LDA_MEMORY,
                 *load_from_addr_at_pc("a.in"),
             ),
-            # sta mem
             instruction(
-                0x03,
+                cls.STA_MEMORY,
                 *store_to_addr_at_pc("a.out"),
             ),
         )
