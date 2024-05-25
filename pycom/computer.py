@@ -13,6 +13,63 @@ from pycom import (
 
 
 class Computer(component.Component):
+    @dataclasses.dataclass(frozen=True)
+    class Program:
+        data: dict[int, int] = dataclasses.field(default_factory=dict)
+
+        def computer(self) -> "Computer":
+            return Computer(data=self.data)
+
+        @classmethod
+        def _value(
+            cls,
+            value: typing.Union[
+                "Computer.Opcode",
+                int,
+            ],
+        ) -> int:
+            match value:
+                case Computer.Opcode():
+                    return value.value
+                case int():
+                    return value
+
+        @property
+        def _next(self) -> int:
+            return max([-1] + list(self.data.keys())) + 1
+
+        def with_value_at(
+            self,
+            address: int,
+            value: typing.Union[
+                "Computer.Opcode",
+                int,
+            ],
+        ) -> "Computer.Program":
+            return Computer.Program(self.data | {address: self._value(value)})
+
+        def with_value(
+            self, value: typing.Union["Computer.Opcode", int]
+        ) -> "Computer.Program":
+            return self.with_value_at(self._next, value)
+
+        def with_values_at(
+            self, address: int, *values: typing.Union["Computer.Opcode", int]
+        ) -> "Computer.Program":
+            return Computer.Program(
+                self.data
+                | {address + i: self._value(value) for i, value in enumerate(values)}
+            )
+
+        def with_values(
+            self,
+            *values: typing.Union[
+                "Computer.Opcode",
+                int,
+            ],
+        ) -> "Computer.Program":
+            return self.with_values_at(self._next, *values)
+
     class Opcode(enum.Enum):
         NOP = 0xEA
         LDA_IMMEDIATE = 0xA9
