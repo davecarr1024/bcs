@@ -1,5 +1,14 @@
 import typing
-from pycom import bus, byte, component, controller, memory, program_counter, register
+from pycom import (
+    alu,
+    bus,
+    byte,
+    component,
+    controller,
+    memory,
+    program_counter,
+    register,
+)
 
 
 class Computer(component.Component):
@@ -134,6 +143,7 @@ class Computer(component.Component):
         self.memory = memory.Memory(self.bus, data=data)
         self.program_counter = program_counter.ProgramCounter(self.bus)
         self.controller = controller.Controller(self.bus, self._controller_entries())
+        self.alu = alu.ALU(self.bus)
         super().__init__(
             name or "computer",
             children=frozenset(
@@ -143,6 +153,7 @@ class Computer(component.Component):
                     self.memory,
                     self.program_counter,
                     self.controller,
+                    self.alu,
                 }
             ),
         )
@@ -152,5 +163,5 @@ class Computer(component.Component):
         return f"Computer(bus={self.bus})"
 
     def update(self) -> None:
-        self.controller.apply()
+        self.controller.apply(self.alu.status)
         super().update()

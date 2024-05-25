@@ -12,10 +12,11 @@ class ControllerTest(unittest.TestCase):
         controller.instruction_buffer = 1
         controller.instruction_counter = 2
         self.assertEqual(
-            controller.state,
+            controller.state(3),
             pycom.Controller.State(
                 instruction=1,
                 instruction_counter=2,
+                status=3,
             ),
         )
 
@@ -32,6 +33,7 @@ class ControllerTest(unittest.TestCase):
                     pycom.Controller.State(
                         instruction=1,
                         instruction_counter=2,
+                        status=3,
                     ),
                     pycom.Controller.Entry(),
                     True,
@@ -40,6 +42,7 @@ class ControllerTest(unittest.TestCase):
                     pycom.Controller.State(
                         instruction=1,
                         instruction_counter=2,
+                        status=3,
                     ),
                     pycom.Controller.Entry(
                         instruction=1,
@@ -50,6 +53,7 @@ class ControllerTest(unittest.TestCase):
                     pycom.Controller.State(
                         instruction=1,
                         instruction_counter=2,
+                        status=3,
                     ),
                     pycom.Controller.Entry(
                         instruction=3,
@@ -60,6 +64,7 @@ class ControllerTest(unittest.TestCase):
                     pycom.Controller.State(
                         instruction=1,
                         instruction_counter=2,
+                        status=3,
                     ),
                     pycom.Controller.Entry(
                         instruction_counter=2,
@@ -70,6 +75,7 @@ class ControllerTest(unittest.TestCase):
                     pycom.Controller.State(
                         instruction=1,
                         instruction_counter=2,
+                        status=3,
                     ),
                     pycom.Controller.Entry(
                         instruction_counter=3,
@@ -102,14 +108,14 @@ class ControllerTest(unittest.TestCase):
         controller = pycom.Controller(pycom.Bus(), entries=frozenset({a, b}))
         controller.instruction_buffer = 1
         controller.instruction_counter = 2
-        self.assertEqual(controller.entry, a)
+        self.assertEqual(controller.entry(3), a)
         controller.instruction_buffer = 3
         controller.instruction_counter = 4
-        self.assertEqual(controller.entry, b)
+        self.assertEqual(controller.entry(3), b)
 
     def test_get_entry_not_found(self) -> None:
         with self.assertRaises(pycom.Controller.EntryError):
-            pycom.Controller(pycom.Bus(), entries=frozenset()).entry
+            pycom.Controller(pycom.Bus(), entries=frozenset()).entry(3)
 
     def test_get_entry_multiple_found(self) -> None:
         with self.assertRaises(pycom.Controller.EntryError):
@@ -121,15 +127,4 @@ class ControllerTest(unittest.TestCase):
                         pycom.Controller.Entry(controls=frozenset({"b"})),
                     }
                 ),
-            ).entry
-
-    def test_unknown_signal(self) -> None:
-        with self.assertRaises(pycom.Controller.ValidationError):
-            pycom.Controller(
-                pycom.Bus(),
-                entries=[
-                    pycom.Controller.Entry(
-                        signals=pycom.Controller.SignalValueMap.build(a=True),
-                    )
-                ],
-            )
+            ).entry(3)

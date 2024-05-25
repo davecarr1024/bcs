@@ -4,6 +4,26 @@ import pycom
 
 
 class ALUTest(unittest.TestCase):
+    def test_set_status(self) -> None:
+        alu = pycom.ALU(pycom.Bus())
+        alu.status = 1
+        self.assertEqual(alu.status, 1)
+
+    def test_set_carry(self) -> None:
+        alu = pycom.ALU(pycom.Bus())
+        alu.carry = True
+        self.assertTrue(alu.carry)
+        self.assertEqual(
+            alu.status & pycom.ALU.CARRY,
+            pycom.ALU.CARRY,
+        )
+        alu.carry = False
+        self.assertFalse(alu.carry)
+        self.assertEqual(
+            alu.status & pycom.ALU.CARRY,
+            0,
+        )
+
     def test_idle(self) -> None:
         alu = pycom.ALU(pycom.Bus())
         alu.lhs = 1

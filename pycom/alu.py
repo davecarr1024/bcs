@@ -1,8 +1,10 @@
 import typing
-from pycom import bus, byte, component, control, flag, register
+from pycom import bus, byte, component, control, register
 
 
 class ALU(component.Component):
+    CARRY = 0b00000001
+
     def __init__(
         self,
         bus: bus.Bus,
@@ -12,7 +14,7 @@ class ALU(component.Component):
         self.__lhs = register.Register(self.bus, "lhs")
         self.__rhs = register.Register(self.bus, "rhs")
         self.__result = register.Register(self.bus, "result")
-        self.__carry = flag.Flag("carry")
+        self.__status = register.Register(self.bus, "status")
         self.__add = control.Control("add")
         super().__init__(
             name or "alu",
@@ -20,7 +22,7 @@ class ALU(component.Component):
                 self.__lhs,
                 self.__rhs,
                 self.__result,
-                self.__carry,
+                self.__status,
             ],
             controls=[
                 self.__add,
@@ -60,15 +62,30 @@ class ALU(component.Component):
         self.__add.value = add
 
     @property
+    def status(self) -> int:
+        return self.__status.value
+
+    @status.setter
+    def status(self, status: int) -> None:
+        self.__status.value = status
+
+    @property
     def carry(self) -> bool:
-        return self.__carry.value
+        return bool(self.status & self.CARRY)
 
     @carry.setter
     def carry(self, carry: bool) -> None:
-        self.__carry.value = carry
+        if carry:
+            self.status |= self.CARRY
+        else:
+            self.status &= ~self.CARRY
 
+    def _set_result_and_status(self, result: int) -> None:
+        self.result = result
+        self.carry = result >= byte.Byte.max() or result < 0
+
+    @typing.override
     def update(self) -> None:
         super().update()
         if self.add:
-            self.result = result = int(self.carry) + self.lhs + self.rhs
-            self.carry = result >= byte.Byte.max()
+            self._set_result_and_status(int(self.carry) + self.lhs + self.rhs)

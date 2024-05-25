@@ -9,8 +9,6 @@ class Component(validatable.Validatable):
 
     class ControlNotFoundError(errorable.Errorable.Error, KeyError): ...
 
-    class SignalNotFoundError(errorable.Errorable.Error, KeyError): ...
-
     def __init__(
         self,
         name: str,
@@ -18,14 +16,12 @@ class Component(validatable.Validatable):
         parent: typing.Optional["Component"] = None,
         children: typing.Optional[typing.Iterable["Component"]] = None,
         controls: typing.Optional[typing.Iterable["control_lib.Control"]] = None,
-        signals: typing.Optional[typing.Iterable["signal_lib.Signal"]] = None,
     ) -> None:
         super().__init__()
         self.__name = name
         self.__parent = None
         self.__children: frozenset[Component] = frozenset()
         self.__controls: frozenset["control_lib.Control"] = frozenset()
-        self.__signals: frozenset["signal_lib.Signal"] = frozenset()
         with self._pause_validation():
             if parent is not None:
                 self.parent = parent
@@ -35,9 +31,6 @@ class Component(validatable.Validatable):
             if controls is not None:
                 for control in controls:
                     self.add_control(control)
-            if signals is not None:
-                for signal in signals:
-                    self.add_signal(signal)
 
     def __eq__(self, rhs: object) -> bool:
         return self is rhs
@@ -157,46 +150,6 @@ class Component(validatable.Validatable):
                 self.__controls -= frozenset({control})
                 control.component = None
 
-    @property
-    def signals(self) -> frozenset["signal_lib.Signal"]:
-        return self.__signals
-
-    @property
-    def all_signals(self) -> frozenset["signal_lib.Signal"]:
-        signals: set[signal_lib.Signal] = set(self.signals)
-        for child in self.children:
-            signals |= child.all_signals
-        return frozenset(signals)
-
-    @property
-    def all_signals_by_name(self) -> typing.Mapping[str, "signal_lib.Signal"]:
-        return {signal.name: signal for signal in self.all_signals}
-
-    @property
-    def signals_by_name(self) -> typing.Mapping[str, "signal_lib.Signal"]:
-        return {signal.name: signal for signal in self.signals}
-
-    def signal(self, name: str) -> "signal_lib.Signal":
-        match (dot_pos := name.find(".")):
-            case -1:
-                if name not in self.signals_by_name:
-                    raise self.SignalNotFoundError(f"unknown signal {name}")
-                return self.signals_by_name[name]
-            case _:
-                return self.child(name[:dot_pos]).signal(name[dot_pos + 1 :])
-
-    def add_signal(self, signal: "signal_lib.Signal") -> None:
-        if signal not in self.signals:
-            with self._pause_validation():
-                self.__signals |= frozenset({signal})
-                signal.component = self
-
-    def remove_signal(self, signal: "signal_lib.Signal") -> None:
-        if signal in self.signals:
-            with self._pause_validation():
-                self.__signals -= frozenset({signal})
-                signal.component = None
-
     @typing.override
     def validate(self) -> None:
         if len(self.children_by_name) != len(self.children):
@@ -214,12 +167,6 @@ class Component(validatable.Validatable):
             if self is not control.component:
                 raise self.ValidationError(f"control {control} not in component {self}")
             control.validate()
-        for signal in self.signals:
-            if self is not signal.component:
-                raise self.ValidationError(f"signal {signal} not in component {self}")
-            signal.validate()
-        if len(self.all_signals_by_name) != len(self.all_signals):
-            raise self.ValidationError(f"duplicate descendant signal")
         for child in self.children:
             child.validate()
 
@@ -229,4 +176,3 @@ class Component(validatable.Validatable):
 
 
 from . import control as control_lib
-from . import signal as signal_lib
