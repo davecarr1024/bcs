@@ -76,13 +76,17 @@ class Memory(component.Component):
 
     @property
     def _address(self) -> int:
-        return (self.address_high_byte << byte.Byte.size()) | self.address_low_byte
+        return byte.Byte.unpartition(
+            self.address_high_byte,
+            self.address_low_byte,
+        )
 
     @_address.setter
     def _address(self, _address: int) -> None:
         if _address != self._address:
-            self.address_high_byte = _address >> byte.Byte.size()
-            self.address_low_byte = _address
+            self.address_high_byte, self.address_low_byte, *_ = byte.Byte.partition(
+                _address
+            )
 
     @property
     def address(self) -> int:

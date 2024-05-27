@@ -56,6 +56,9 @@ class Instructions(enum.Enum):
             "program_counter.high_byte.in",
         ),
     )
+    # BNE = instruction.Instruction.build(
+    #     0xDO,
+    # )
 
     @classmethod
     def entries(cls) -> frozenset[controller.Controller.Entry]:

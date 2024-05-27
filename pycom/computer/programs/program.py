@@ -97,9 +97,9 @@ class Program(errorable.Errorable):
                 case int():
                     data[address] = value
                 case str():
-                    value = self.label(value)
-                    data[address] = value >> byte.Byte.size()
-                    data[address + 1] = value % byte.Byte.max()
+                    data[address], data[address + 1], *_ = byte.Byte.partition(
+                        self.label(value)
+                    )
         return data
 
     def as_computer(self) -> "computer.Computer":

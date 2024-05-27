@@ -86,38 +86,61 @@ class ByteTest(unittest.TestCase):
     def test_default(self) -> None:
         self.assertEqual(pycom.Byte(0), pycom.Byte())
 
-    def test_bytes_to_int(self) -> None:
-        self.assertEqual(
-            pycom.Byte.bytes_to_int(
-                pycom.Byte(0xBE),
-                pycom.Byte(0xEF),
-            ),
-            0xBEEF,
-        )
-
-    def test_int_to_bytes(self) -> None:
-        self.assertListEqual(
-            list(pycom.Byte.int_to_bytes(0xBEEF)),
+    def test_partition(self) -> None:
+        for value, expected in list[
+            tuple[
+                int,
+                typing.Sequence[int],
+            ]
+        ](
             [
-                pycom.Byte(0xBE),
-                pycom.Byte(0xEF),
-            ],
-        )
+                (
+                    0,
+                    (0, 0),
+                ),
+                (
+                    0x0001,
+                    (0x00, 0x01),
+                ),
+                (
+                    0xBEEF,
+                    (0xBE, 0xEF),
+                ),
+                (
+                    0xDEADBEEF,
+                    (0xDE, 0xAD, 0xBE, 0xEF),
+                ),
+            ]
+        ):
+            with self.subTest(value=value, expected=expected):
+                self.assertSequenceEqual(
+                    pycom.Byte.partition(value),
+                    expected,
+                )
 
-    def test_int_to_bytes_pad(self) -> None:
-        self.assertListEqual(
-            list(pycom.Byte.int_to_bytes(1)),
+    def test_unpartition(self) -> None:
+        for parts, expected in list[tuple[typing.Sequence[int], int]](
             [
-                pycom.Byte(0),
-                pycom.Byte(1),
-            ],
-        )
-
-    def test_int_to_bytes_zero(self) -> None:
-        self.assertListEqual(
-            list(pycom.Byte.int_to_bytes(0)),
-            [
-                pycom.Byte(0),
-                pycom.Byte(0),
-            ],
-        )
+                (
+                    (0,),
+                    0,
+                ),
+                (
+                    (0x00, 0x01),
+                    0x01,
+                ),
+                (
+                    (0xBE, 0xEF),
+                    0xBEEF,
+                ),
+                (
+                    (0xDE, 0xAD, 0xBE, 0xEF),
+                    0xDEADBEEF,
+                ),
+            ]
+        ):
+            with self.subTest(parts=parts, expected=expected):
+                self.assertEqual(
+                    pycom.Byte.unpartition(*parts),
+                    expected,
+                )

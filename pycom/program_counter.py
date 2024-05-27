@@ -41,12 +41,11 @@ class ProgramCounter(component.Component):
 
     @property
     def value(self) -> int:
-        return (self.high_byte << byte.Byte.size()) | self.low_byte
+        return byte.Byte.unpartition(self.high_byte, self.low_byte)
 
     @value.setter
     def value(self, value: int) -> None:
-        self.high_byte = value >> byte.Byte.size()
-        self.low_byte = value
+        self.high_byte, self.low_byte, *_ = byte.Byte.partition(value)
 
     @property
     def increment(self) -> bool:

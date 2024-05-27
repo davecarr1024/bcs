@@ -26,23 +26,23 @@ class Byte(
         return [bool(value & (1 << (cls.size() - 1 - i))) for i in range(cls.size())]
 
     @classmethod
-    def bytes_to_int(cls, *bytes: "Byte") -> int:
-        result = 0
-        for i, byte in enumerate(reversed(bytes)):
-            result |= byte.value << (i * cls.size())
-        return result
-
-    @classmethod
-    def int_to_bytes(
+    def partition(
         cls,
         value: int,
-        min_num_bytes: int = 2,
-    ) -> typing.Sequence["Byte"]:
-        bytes: typing.MutableSequence[Byte] = []
-        while value or len(bytes) < min_num_bytes:
-            bytes.insert(0, Byte(value))
+        min_num_parts: int = 2,
+    ) -> typing.Sequence[int]:
+        parts: typing.MutableSequence[int] = []
+        while value or len(parts) < min_num_parts:
+            parts.insert(0, value % cls.max())
             value >>= cls.size()
-        return bytes
+        return parts
+
+    @classmethod
+    def unpartition(cls, *parts: int) -> int:
+        result = 0
+        for i, part in enumerate(reversed(parts)):
+            result |= part << (i * cls.size())
+        return result
 
     @typing.overload
     def __init__(self) -> None: ...

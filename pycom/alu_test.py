@@ -46,6 +46,7 @@ class ALUTest(unittest.TestCase):
         alu.add = False
         alu.update()
         self.assertEqual(alu.result, 0)
+        self.assertFalse(alu.zero)
 
     def test_add(self) -> None:
         alu = pycom.ALU(pycom.Bus())
@@ -56,6 +57,7 @@ class ALUTest(unittest.TestCase):
         alu.update()
         self.assertEqual(alu.result, 3)
         self.assertFalse(alu.carry)
+        self.assertFalse(alu.zero)
 
     def test_add_carry_in(self) -> None:
         alu = pycom.ALU(pycom.Bus())
@@ -67,6 +69,7 @@ class ALUTest(unittest.TestCase):
         alu.update()
         self.assertEqual(alu.result, 4)
         self.assertFalse(alu.carry)
+        self.assertFalse(alu.zero)
 
     def test_add_carry_out(self) -> None:
         alu = pycom.ALU(pycom.Bus())
@@ -78,6 +81,7 @@ class ALUTest(unittest.TestCase):
         alu.update()
         self.assertEqual(alu.result, 0)
         self.assertTrue(alu.carry)
+        self.assertTrue(alu.zero)
 
     def test_add_carry_in_out(self) -> None:
         alu = pycom.ALU(pycom.Bus())
@@ -89,3 +93,20 @@ class ALUTest(unittest.TestCase):
         alu.update()
         self.assertEqual(alu.result, 1)
         self.assertTrue(alu.carry)
+        self.assertFalse(alu.zero)
+
+    def test_inc(self) -> None:
+        alu = pycom.ALU(pycom.Bus())
+        alu.lhs = 1
+        alu.inc = True
+        alu.update()
+        self.assertEqual(alu.result, 2)
+        self.assertFalse(alu.zero)
+
+    def test_dec(self) -> None:
+        alu = pycom.ALU(pycom.Bus())
+        alu.lhs = 1
+        alu.dec = True
+        alu.update()
+        self.assertEqual(alu.result, 0)
+        self.assertTrue(alu.zero)

@@ -4,6 +4,7 @@ from pycom import bus, byte, component, control, register
 
 class ALU(component.Component):
     CARRY = 0b00000001
+    ZERO = 0b00000010
 
     def __init__(
         self,
@@ -16,6 +17,8 @@ class ALU(component.Component):
         self.__result = register.Register(self.bus, "result")
         self.__status = register.Register(self.bus, "status")
         self.__add = control.Control("add")
+        self.__inc = control.Control("inc")
+        self.__dec = control.Control("dec")
         self.__carry_set = control.Control("carry_set")
         self.__carry_clear = control.Control("carry_clear")
         super().__init__(
@@ -28,6 +31,8 @@ class ALU(component.Component):
             ],
             controls=[
                 self.__add,
+                self.__inc,
+                self.__dec,
                 self.__carry_set,
                 self.__carry_clear,
             ],
@@ -66,6 +71,22 @@ class ALU(component.Component):
         self.__add.value = add
 
     @property
+    def inc(self) -> bool:
+        return self.__inc.value
+
+    @inc.setter
+    def inc(self, inc: bool) -> None:
+        self.__inc.value = inc
+
+    @property
+    def dec(self) -> bool:
+        return self.__dec.value
+
+    @dec.setter
+    def dec(self, dec: bool) -> None:
+        self.__dec.value = dec
+
+    @property
     def status(self) -> int:
         return self.__status.value
 
@@ -84,9 +105,21 @@ class ALU(component.Component):
         else:
             self.status &= ~self.CARRY
 
+    @property
+    def zero(self) -> bool:
+        return bool(self.status & self.ZERO)
+
+    @zero.setter
+    def zero(self, zero: bool) -> None:
+        if zero:
+            self.status |= self.ZERO
+        else:
+            self.status &= ~self.ZERO
+
     def _set_result_and_status(self, result: int) -> None:
         self.result = result
         self.carry = result >= byte.Byte.max() or result < 0
+        self.zero = self.result == 0
 
     @typing.override
     def update(self) -> None:
@@ -98,3 +131,7 @@ class ALU(component.Component):
 
         if self.add:
             self._set_result_and_status(int(self.carry) + self.lhs + self.rhs)
+        elif self.inc:
+            self._set_result_and_status(self.lhs + 1)
+        elif self.dec:
+            self._set_result_and_status(self.lhs - 1)
