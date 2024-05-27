@@ -47,79 +47,47 @@ class ComputerTest(unittest.TestCase):
         computer.run_instruction()
         self.assertEqual(computer.a, 42)
 
-    # def test_lda_memory(self) -> None:
-    #     computer = (
-    #         pycom.computer.Computer.Program()
-    #         .with_values(
-    #             pycom.computer.Computer.Opcode.LDA_ABSOLUTE,
-    #             0xBE,
-    #             0xEF,
-    #         )
-    #         .with_value_at(
-    #             0xBEEF,
-    #             42,
-    #         )
-    #         .computer()
-    #     )
-    #     computer.controller.run_instruction()
-    #     self.assertEqual(computer.a, 42)
+    def test_sta_absolute(self) -> None:
+        computer = pycom.computer.Program.computer(
+            pycom.computer.Instructions.LDA_IMMEDIATE(42),
+            pycom.computer.Instructions.STA_ABSOLUTE(0xBE, 0xEF),
+        )
+        computer.run_instructions(2)
+        self.assertEqual(computer.memory.data[0xBEEF], 42)
 
-    # def test_sta_memory(self) -> None:
-    #     computer = (
-    #         pycom.computer.Computer.Program()
-    #         .with_values(
-    #             pycom.computer.Computer.Opcode.LDA_IMMEDIATE,
-    #             42,
-    #         )
-    #         .with_values(
-    #             pycom.computer.Computer.Opcode.STA_ABSOLUTE,
-    #             0xBE,
-    #             0xEF,
-    #         )
-    #         .computer()
-    #     )
-    #     computer.controller.run_instructions(2)
-    #     self.assertEqual(
-    #         computer.memory.data[0xBEEF],
-    #         42,
-    #     )
+    def test_sta_absolute_label(self) -> None:
+        computer = (
+            pycom.computer.Program.build(
+                pycom.computer.Instructions.LDA_IMMEDIATE(42),
+                pycom.computer.Instructions.STA_ABSOLUTE("value"),
+            )
+            .at(0xBEEF)
+            .with_label("value")
+            .as_computer()
+        )
+        computer.run_instructions(2)
+        self.assertEqual(computer.memory.data[0xBEEF], 42)
 
-    # def test_clc(self) -> None:
-    #     computer = (
-    #         pycom.computer.Computer.Program()
-    #         .with_value(
-    #             pycom.computer.Computer.Opcode.CLC,
-    #         )
-    #         .computer()
-    #     )
-    #     computer.alu.carry = True
-    #     computer.run_instruction()
-    #     self.assertFalse(computer.alu.carry)
+    def test_clc(self) -> None:
+        computer = pycom.computer.Program.computer(
+            pycom.computer.Instructions.CLC(),
+        )
+        computer.alu.carry = True
+        computer.run_instruction()
+        self.assertFalse(computer.alu.carry)
 
-    # def test_sec(self) -> None:
-    #     computer = (
-    #         pycom.computer.Computer.Program()
-    #         .with_value(
-    #             pycom.computer.Computer.Opcode.SEC,
-    #         )
-    #         .computer()
-    #     )
-    #     computer.alu.carry = False
-    #     computer.run_instruction()
-    #     self.assertTrue(computer.alu.carry)
+    def test_sec(self) -> None:
+        computer = pycom.computer.Program.computer(
+            pycom.computer.Instructions.SEC(),
+        )
+        computer.alu.carry = False
+        computer.run_instruction()
+        self.assertTrue(computer.alu.carry)
 
-    # def test_adc_immediate(self) -> None:
-    #     computer = (
-    #         pycom.computer.Computer.Program()
-    #         .with_values(
-    #             pycom.computer.Computer.Opcode.LDA_IMMEDIATE,
-    #             1,
-    #         )
-    #         .with_values(
-    #             pycom.computer.Computer.Opcode.ADC_IMMEDIATE,
-    #             2,
-    #         )
-    #         .computer()
-    #     )
-    #     computer.run_instructions(2)
-    #     self.assertEqual(computer.a, 3)
+    def test_adc_immediate(self) -> None:
+        computer = pycom.computer.Program.computer(
+            pycom.computer.Instructions.LDA_IMMEDIATE(1),
+            pycom.computer.Instructions.ADC_IMMEDIATE(2),
+        )
+        computer.run_instructions(2)
+        self.assertEqual(computer.a, 3)
