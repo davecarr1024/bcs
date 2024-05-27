@@ -11,7 +11,6 @@ class ComputerTest(unittest.TestCase):
         computer = pycom.computer.Program.computer(
             pycom.computer.Instructions.NOP(),
         )
-
         computer.run_instruction()
         self.assertEqual(computer.controller.instruction_counter, 0)
         self.assertEqual(computer.program_counter, 1)

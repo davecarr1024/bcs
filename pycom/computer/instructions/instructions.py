@@ -1,5 +1,4 @@
 import enum
-import typing
 from pycom import controller
 from pycom.computer.instructions import instruction
 from pycom.computer.instructions import instruction
