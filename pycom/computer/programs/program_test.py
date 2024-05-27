@@ -58,19 +58,95 @@ class ProgramTest(unittest.TestCase):
         )
 
     def test_with_value(self) -> None:
-        self.assertEqual(
-            pycom.computer.Program().with_value(1),
-            pycom.computer.Program(
-                data={0: 1},
-                next_address=1,
-            ),
-        )
+        for program, value, expected in list[
+            tuple[
+                pycom.computer.Program,
+                pycom.computer.programs.program.Value,
+                pycom.computer.Program,
+            ]
+        ](
+            [
+                (
+                    pycom.computer.Program(),
+                    1,
+                    pycom.computer.Program(
+                        data={0: 1},
+                        next_address=1,
+                    ),
+                ),
+                (
+                    pycom.computer.Program(),
+                    "a",
+                    pycom.computer.Program(
+                        data={0: "a"},
+                        next_address=2,
+                    ),
+                ),
+            ]
+        ):
+            with self.subTest(
+                program=program,
+                value=value,
+                expected=expected,
+            ):
+                self.assertEqual(
+                    program.with_value(value),
+                    expected,
+                )
 
     def test_with_values(self) -> None:
-        self.assertEqual(
-            pycom.computer.Program().with_values(1, 2),
-            pycom.computer.Program(data={0: 1, 1: 2}, next_address=2),
-        )
+        for program, values, expected in list[
+            tuple[
+                pycom.computer.Program,
+                typing.Iterable[pycom.computer.programs.program.Value],
+                pycom.computer.Program,
+            ]
+        ](
+            [
+                (
+                    pycom.computer.Program(),
+                    [],
+                    pycom.computer.Program(),
+                ),
+                (
+                    pycom.computer.Program(),
+                    [1],
+                    pycom.computer.Program(
+                        data={0: 1},
+                        next_address=1,
+                    ),
+                ),
+                (
+                    pycom.computer.Program(),
+                    "a",
+                    pycom.computer.Program(
+                        data={0: "a"},
+                        next_address=2,
+                    ),
+                ),
+                (
+                    pycom.computer.Program(),
+                    [1, "a", 2],
+                    pycom.computer.Program(
+                        data={
+                            0: 1,
+                            1: "a",
+                            3: 2,
+                        },
+                        next_address=4,
+                    ),
+                ),
+            ]
+        ):
+            with self.subTest(
+                program=program,
+                value=values,
+                expected=expected,
+            ):
+                self.assertEqual(
+                    program.with_values(*values),
+                    expected,
+                )
 
     def test_with_label_at(self) -> None:
         self.assertEqual(
@@ -168,3 +244,47 @@ class ProgramTest(unittest.TestCase):
                     program.with_entry(entry),
                     expected,
                 )
+
+    def test_finalize_data(self) -> None:
+        for program, expected in list[
+            tuple[
+                pycom.computer.Program,
+                typing.Optional[typing.Mapping[int, int]],
+            ]
+        ](
+            [
+                (
+                    pycom.computer.Program(),
+                    {},
+                ),
+                (
+                    pycom.computer.Program().with_value(1),
+                    {
+                        0: 1,
+                    },
+                ),
+                (
+                    pycom.computer.Program().with_value("a"),
+                    None,
+                ),
+                (
+                    pycom.computer.Program().with_value("a").at(0xBEEF).with_label("a"),
+                    {
+                        0: 0xBE,
+                        1: 0xEF,
+                    },
+                ),
+            ]
+        ):
+            with self.subTest(
+                program=program,
+                expected=expected,
+            ):
+                if expected is None:
+                    with self.assertRaises(pycom.computer.Program.Error):
+                        program.finalize_data()
+                else:
+                    self.assertDictEqual(
+                        program.finalize_data(),
+                        expected,
+                    )

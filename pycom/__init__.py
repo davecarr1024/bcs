@@ -8,4 +8,4 @@ from .program_counter import ProgramCounter
 from .memory import Memory
 from .controller import Controller
 from .alu import ALU
-from . import computer
+from .computer import Computer

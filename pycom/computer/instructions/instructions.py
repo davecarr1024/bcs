@@ -53,8 +53,8 @@ class Instructions(enum.Enum):
     def entries(cls) -> frozenset[controller.Controller.Entry]:
         return frozenset().union(*[instruction.value.entries() for instruction in cls])
 
-    def __call__(self, *operands: int | str) -> "statement.Statement":
+    def __call__(self, *operands: "program.Value") -> "statement.Statement":
         return operation.Operation(instruction=self, operands=list(operands))
 
 
-from pycom.computer.programs import statement, operation
+from pycom.computer.programs import statement, operation, program
