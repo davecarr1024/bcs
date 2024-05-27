@@ -2,6 +2,13 @@ import dataclasses
 import typing
 from pycom import errorable
 
+Entry: typing.TypeAlias = typing.Union[
+    int,
+    str,
+    "instructions.Instructions",
+    "statement.Statement",
+]
+
 
 @dataclasses.dataclass(frozen=True, kw_only=True)
 class Program(errorable.Errorable):
@@ -25,6 +32,9 @@ class Program(errorable.Errorable):
                 next_address if next_address is not None else self.next_address
             ),
         )
+
+    def at(self, next_address: int) -> "Program":
+        return self.with_(next_address=next_address)
 
     def with_value_at(
         self,
@@ -59,25 +69,32 @@ class Program(errorable.Errorable):
     def as_computer(self) -> "computer.Computer":
         return computer.Computer(data=self.data)
 
+    def with_entry(self, entry: Entry) -> "Program":
+        match entry:
+            case int():
+                return self.with_value(entry)
+            case str():
+                return self.with_label(entry)
+            case instructions.Instructions():
+                return self.with_value(entry.value.opcode)
+            case statement.Statement():
+                return self.with_statement(entry)
+
+    def with_entries(
+        self,
+        *entries: Entry,
+    ) -> "Program":
+        program = self
+        for entry in entries:
+            program = program.with_entry(entry)
+        return program
+
     @classmethod
     def build(
         cls,
-        *entries: typing.Union[
-            int,
-            "instructions.Instructions",
-            "statement.Statement",
-        ],
+        *entries: Entry,
     ) -> "Program":
-        program = Program()
-        for entry in entries:
-            match entry:
-                case int():
-                    program = program.with_value(entry)
-                case instructions.Instructions():
-                    program = program.with_value(entry.value.opcode)
-                case statement.Statement():
-                    program = program.with_statement(entry)
-        return program
+        return Program().with_entries(*entries)
 
 
 from . import statement
