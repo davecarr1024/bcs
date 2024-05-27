@@ -1,25 +1,24 @@
-import abc
+import dataclasses
 import typing
 from pycom import controller
-from pycom.computer import instruction_step
+from pycom.computer.instructions import step as step_lib
 
 
-class Instruction(abc.ABC):
-    @abc.abstractmethod
-    def entries(self) -> frozenset[controller.Controller.Entry]: ...
-
-    @classmethod
-    def step(cls, *controls: str) -> instruction_step.InstructionStep:
-        return instruction_step.InstructionStep().with_controls(*controls)
+@dataclasses.dataclass(frozen=True, kw_only=True)
+class Instruction:
+    opcode: int
+    _steps: list[step_lib.Step] = dataclasses.field(default_factory=list)
 
     @classmethod
-    def steps(
-        cls, *steps: instruction_step.InstructionStep
-    ) -> list[instruction_step.InstructionStep]:
+    def step(cls, *controls: str) -> step_lib.Step:
+        return step_lib.Step().with_controls(*controls)
+
+    @classmethod
+    def steps(cls, *steps: step_lib.Step) -> list[step_lib.Step]:
         return list(steps)
 
     @classmethod
-    def load_from_pc(cls, dest: str) -> list[instruction_step.InstructionStep]:
+    def load_from_pc(cls, dest: str) -> list[step_lib.Step]:
         return cls.steps(
             cls.step(
                 "program_counter.high_byte.out",
@@ -37,7 +36,7 @@ class Instruction(abc.ABC):
         )
 
     @classmethod
-    def load_addr_at_pc(cls) -> list[instruction_step.InstructionStep]:
+    def load_addr_at_pc(cls) -> list[step_lib.Step]:
         return cls.steps(
             *cls.load_from_pc("controller.address_buffer.in"),
             *cls.load_from_pc("memory.address_low_byte.in"),
@@ -48,7 +47,7 @@ class Instruction(abc.ABC):
         )
 
     @classmethod
-    def load_from_addr_at_pc(cls, dest: str) -> list[instruction_step.InstructionStep]:
+    def load_from_addr_at_pc(cls, dest: str) -> list[step_lib.Step]:
         return cls.steps(
             *cls.load_addr_at_pc(),
             cls.step(
@@ -58,7 +57,7 @@ class Instruction(abc.ABC):
         )
 
     @classmethod
-    def store_to_addr_at_pc(cls, src: str) -> list[instruction_step.InstructionStep]:
+    def store_to_addr_at_pc(cls, src: str) -> list[step_lib.Step]:
         return cls.steps(
             *cls.load_addr_at_pc(),
             cls.step(
@@ -74,12 +73,12 @@ class Instruction(abc.ABC):
         instruction: typing.Optional[int],
         starting_instruction_counter: int,
         reset_instruction_counter: bool,
-        steps: list[instruction_step.InstructionStep],
+        steps: list[step_lib.Step],
     ) -> frozenset[controller.Controller.Entry]:
         reset_control = "controller.instruction_counter.reset"
         increment_control = "controller.instruction_counter.increment"
         last_control = reset_control if reset_instruction_counter else increment_control
-        steps = steps or [instruction_step.InstructionStep()]
+        steps = steps or [step_lib.Step()]
         return frozenset(
             {
                 step.with_controls(increment_control).entry(
@@ -105,4 +104,24 @@ class Instruction(abc.ABC):
             starting_instruction_counter=0,
             reset_instruction_counter=False,
             steps=cls.load_from_pc("controller.instruction_buffer.in"),
+        )
+
+    def entries(self) -> frozenset[controller.Controller.Entry]:
+        preamble = self._preamble()
+        return preamble | self._entries_for_steps(
+            instruction=self.opcode,
+            starting_instruction_counter=len(preamble),
+            reset_instruction_counter=True,
+            steps=self._steps,
+        )
+
+    @classmethod
+    def build(
+        cls,
+        opcode: int,
+        *steps: step_lib.Step,
+    ) -> "Instruction":
+        return Instruction(
+            opcode=opcode,
+            _steps=list(steps),
         )

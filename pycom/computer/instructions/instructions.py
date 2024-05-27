@@ -1,37 +1,39 @@
 import enum
+import typing
 from pycom import controller
-from pycom.computer import instruction, simple_instruction
+from pycom.computer.instructions import instruction
+from pycom.computer.instructions import instruction
 
 
 class Instructions(enum.Enum):
-    NOP = simple_instruction.SimpleInstruction.build(
+    NOP = instruction.Instruction.build(
         0xEA,
     )
-    LDA_IMMEDIATE = simple_instruction.SimpleInstruction.build(
+    LDA_IMMEDIATE = instruction.Instruction.build(
         0xA9,
         *instruction.Instruction.load_from_pc("a.in"),
     )
-    LDA_ABSOLUTE = simple_instruction.SimpleInstruction.build(
+    LDA_ABSOLUTE = instruction.Instruction.build(
         0xAD,
         *instruction.Instruction.load_from_addr_at_pc("a.in"),
     )
-    STA_ABSOLUTE = simple_instruction.SimpleInstruction.build(
+    STA_ABSOLUTE = instruction.Instruction.build(
         0x8D,
         *instruction.Instruction.store_to_addr_at_pc("a.out"),
     )
-    SEC = simple_instruction.SimpleInstruction.build(
+    SEC = instruction.Instruction.build(
         0x38,
         instruction.Instruction.step(
             "alu.carry_set",
         ),
     )
-    CLC = simple_instruction.SimpleInstruction.build(
+    CLC = instruction.Instruction.build(
         0x18,
         instruction.Instruction.step(
             "alu.carry_clear",
         ),
     )
-    ADC_IMMEDIATE = simple_instruction.SimpleInstruction.build(
+    ADC_IMMEDIATE = instruction.Instruction.build(
         0x69,
         *instruction.Instruction.load_from_pc("alu.lhs.in"),
         instruction.Instruction.step(
@@ -50,3 +52,9 @@ class Instructions(enum.Enum):
     @classmethod
     def entries(cls) -> frozenset[controller.Controller.Entry]:
         return frozenset().union(*[instruction.value.entries() for instruction in cls])
+
+    def __call__(self, *operands: int | str) -> "statement.Statement":
+        return operation.Operation(instruction=self, operands=list(operands))
+
+
+from pycom.computer.programs import statement, operation

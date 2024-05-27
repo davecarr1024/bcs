@@ -8,11 +8,10 @@ class ComputerTest(unittest.TestCase):
         self.assertEqual(computer.controller.instruction_counter, 0)
 
     def test_nop(self) -> None:
-        computer = pycom.computer.Computer(
-            data={
-                0: pycom.computer.Instructions.NOP.value.opcode,
-            }
-        )
+        computer = pycom.computer.Program.build(
+            pycom.computer.Instructions.NOP(),
+        ).as_computer()
+
         computer.run_instruction()
         self.assertEqual(computer.controller.instruction_counter, 0)
         self.assertEqual(computer.program_counter, 1)
