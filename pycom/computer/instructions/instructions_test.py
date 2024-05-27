@@ -8,7 +8,7 @@ class InstructionsTest(unittest.TestCase):
         for instructions, operands, expected in list[
             tuple[
                 pycom.computer.Instructions,
-                typing.Iterable[int | str],
+                typing.Iterable[pycom.computer.programs.program.Value],
                 pycom.computer.Statement,
             ]
         ](

@@ -47,6 +47,15 @@ class Instructions(enum.Enum):
             "a.in",
         ),
     )
+    JMP_ABSOLUTE = instruction.Instruction.build(
+        0x4C,
+        *instruction.Instruction.load_from_pc("controller.address_buffer.in"),
+        *instruction.Instruction.load_from_pc("program_counter.low_byte.in"),
+        instruction.Instruction.step(
+            "controller.address_buffer.out",
+            "program_counter.high_byte.in",
+        ),
+    )
 
     @classmethod
     def entries(cls) -> frozenset[controller.Controller.Entry]:

@@ -90,3 +90,18 @@ class ComputerTest(unittest.TestCase):
         )
         computer.run_instructions(2)
         self.assertEqual(computer.a, 3)
+
+    def test_jmp_absolute(self) -> None:
+        computer = (
+            pycom.computer.Program.build(
+                pycom.computer.Instructions.JMP_ABSOLUTE("a"),
+            )
+            .at(0xBEEF)
+            .with_label("a")
+            .as_computer()
+        )
+        computer.run_instruction()
+        self.assertEqual(
+            computer.program_counter,
+            0xBEEF,
+        )
