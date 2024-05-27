@@ -1,5 +1,5 @@
 import enum
-from pycom import controller
+from pycom import alu, controller
 from pycom.computer.instructions import instruction
 from pycom.computer.instructions import instruction
 
@@ -56,9 +56,19 @@ class Instructions(enum.Enum):
             "program_counter.high_byte.in",
         ),
     )
-    # BNE = instruction.Instruction.build(
-    #     0xDO,
-    # )
+    BNE = (
+        instruction.Instruction(opcode=0xD0)
+        .with_steps_for_status(
+            alu.ALU.ZERO,
+            alu.ALU.ZERO,
+            *instruction.Instruction.load_from_pc("program_counter.low_byte.in"),
+        )
+        .with_steps_for_status(
+            alu.ALU.ZERO,
+            0,
+            instruction.Instruction.step("program_counter.increment"),
+        )
+    )
 
     @classmethod
     def entries(cls) -> frozenset[controller.Controller.Entry]:

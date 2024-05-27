@@ -105,3 +105,25 @@ class ComputerTest(unittest.TestCase):
             computer.program_counter,
             0xBEEF,
         )
+
+    def test_bne_true(self) -> None:
+        computer = pycom.computer.Program.computer(
+            pycom.computer.Instructions.BNE(0x42),
+        )
+        computer.alu.zero = True
+        computer.run_instruction()
+        self.assertEqual(
+            computer.program_counter,
+            0x42,
+        )
+
+    def test_bne_false(self) -> None:
+        computer = pycom.computer.Program.computer(
+            pycom.computer.Instructions.BNE(0x42),
+        )
+        computer.alu.zero = False
+        computer.run_instruction()
+        self.assertEqual(
+            computer.program_counter,
+            0x2,
+        )
