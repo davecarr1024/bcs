@@ -21,7 +21,7 @@ class ProgramCounter(component.Component):
 
     @typing.override
     def _str_line(self) -> str:
-        return f"{self.name}({self.value})"
+        return f"{self.name}({byte.Byte.hex_str(self.value)})"
 
     @property
     def low_byte(self) -> int:

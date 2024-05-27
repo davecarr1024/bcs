@@ -8,37 +8,44 @@ class ComputerTest(unittest.TestCase):
         self.assertEqual(computer.controller.instruction_counter, 0)
 
     def test_nop(self) -> None:
-        computer = pycom.computer.Program.build(
+        computer = pycom.computer.Program.computer(
             pycom.computer.Instructions.NOP(),
-        ).as_computer()
+        )
 
         computer.run_instruction()
         self.assertEqual(computer.controller.instruction_counter, 0)
         self.assertEqual(computer.program_counter, 1)
 
-    # def test_nop(self) -> None:
-    #     computer = (
-    #         pycom.computer.Computer.Program()
-    #         .with_value(
-    #             pycom.computer.Computer.Opcode.NOP,
-    #         )
-    #         .computer()
-    #     )
-    #     computer.controller.run_instruction()
-    #     self.assertEqual(computer.controller.instruction_counter, 0)
-    #     self.assertEqual(computer.program_counter, 1)
+    def test_lda_immediate(self) -> None:
+        computer = pycom.computer.Program.computer(
+            pycom.computer.Instructions.LDA_IMMEDIATE(42),
+        )
+        computer.run_instruction()
+        self.assertEqual(computer.a, 42)
 
-    # def test_lda_immediate(self) -> None:
-    #     computer = (
-    #         pycom.computer.Computer.Program()
-    #         .with_values(
-    #             pycom.computer.Computer.Opcode.LDA_IMMEDIATE,
-    #             2,
-    #         )
-    #         .computer()
-    #     )
-    #     computer.controller.run_instruction()
-    #     self.assertEqual(computer.a, 2)
+    def test_lda_absolute(self) -> None:
+        computer = (
+            pycom.computer.Program.build(
+                pycom.computer.Instructions.LDA_ABSOLUTE(0xBE, 0xEF),
+            )
+            .with_value_at(0xBEEF, 42)
+            .as_computer()
+        )
+        computer.run_instruction()
+        self.assertEqual(computer.a, 42)
+
+    def test_lda_absolute_with_label(self) -> None:
+        computer = (
+            pycom.computer.Program.build(
+                pycom.computer.Instructions.LDA_ABSOLUTE("value"),
+            )
+            .at(0xBEEF)
+            .with_label("value")
+            .with_value(42)
+            .as_computer()
+        )
+        computer.run_instruction()
+        self.assertEqual(computer.a, 42)
 
     # def test_lda_memory(self) -> None:
     #     computer = (

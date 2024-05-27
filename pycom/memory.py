@@ -48,7 +48,7 @@ class Memory(component.Component):
 
     @typing.override
     def _str_line(self) -> str:
-        return f"{self.name}({self.address},{self.value})"
+        return f"{self.name}({self.address},{byte.Byte.hex_str(self.value)})"
 
     @property
     def data(self) -> typing.Mapping[int, byte.Byte]:

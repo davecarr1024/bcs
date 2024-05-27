@@ -23,7 +23,7 @@ class Program(errorable.Errorable):
         *,
         data: typing.Optional[typing.Mapping[int, int]] = None,
         labels: typing.Optional[typing.Mapping[str, int]] = None,
-        next_address: typing.Optional[int] = 0,
+        next_address: typing.Optional[int] = None,
     ) -> "Program":
         return Program(
             data=dict(self.data) | (dict(data or {})),
@@ -33,8 +33,12 @@ class Program(errorable.Errorable):
             ),
         )
 
-    def at(self, next_address: int) -> "Program":
-        return self.with_(next_address=next_address)
+    def at(self, next_address: int | str) -> "Program":
+        match next_address:
+            case int():
+                return self.with_(next_address=next_address)
+            case str():
+                return self.with_(next_address=self.label(next_address))
 
     def with_value_at(
         self,
@@ -55,8 +59,11 @@ class Program(errorable.Errorable):
             next_address=self.next_address + len(values),
         )
 
+    def with_label_at(self, name: str, address: int) -> "Program":
+        return self.with_(labels={name: address})
+
     def with_label(self, name: str) -> "Program":
-        return self.with_(labels={name: self.next_address})
+        return self.with_label_at(name, self.next_address)
 
     def with_statement(self, statemewnt: "statement.Statement") -> "Program":
         return statemewnt(self)
@@ -95,6 +102,10 @@ class Program(errorable.Errorable):
         *entries: Entry,
     ) -> "Program":
         return Program().with_entries(*entries)
+
+    @classmethod
+    def computer(cls, *entries: Entry) -> "computer.Computer":
+        return cls.build(*entries).as_computer()
 
 
 from . import statement

@@ -17,7 +17,7 @@ class Operation(statement.Statement):
                 case str():
                     address = program.label(operand)
                     yield address >> byte.Byte.size()
-                    yield address
+                    yield address % byte.Byte.max()
 
     @typing.override
     def __call__(self, program: program.Program) -> program.Program:

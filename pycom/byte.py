@@ -76,8 +76,12 @@ class Byte(
     def __iter__(self) -> typing.Iterator[bool]:
         return iter(self.bits)
 
+    @classmethod
+    def hex_str(cls, value: int) -> str:
+        return f"0x{value:X}"
+
     def __repr__(self) -> str:
-        return f"{self._value:#0{4}x}"
+        return self.hex_str(self._value)
 
     @property
     def value(self) -> int:

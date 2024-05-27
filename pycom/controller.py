@@ -1,6 +1,6 @@
 import dataclasses
 import typing
-from pycom import bus, component, counter, errorable, register
+from pycom import bus, byte, component, counter, errorable, register
 
 
 class Controller(component.Component):
@@ -27,7 +27,10 @@ class Controller(component.Component):
         controls: frozenset[str] = dataclasses.field(default_factory=frozenset)
 
         def __str__(self) -> str:
-            return f"{self.instruction or '*'}.{self.instruction_counter or '*'} {','.join(self.controls)}"
+            def _str(value: int | None) -> str:
+                return byte.Byte.hex_str(value) if value is not None else "*"
+
+            return f"{_str(self.instruction)}.{_str(self.instruction_counter)} {','.join(self.controls)}"
 
         def matches(self, state: "Controller.State") -> bool:
             return all(
