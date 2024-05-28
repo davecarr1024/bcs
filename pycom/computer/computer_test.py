@@ -37,18 +37,20 @@ class ComputerTest(unittest.TestCase):
         computer.run_instruction()
         self.assertEqual(computer.a, 42)
 
-    # def test_lda_absolute_with_label(self) -> None:
-    #     computer = (
-    #         pycom.computer.Program.build(
-    #             pycom.computer.Instructions.LDA_ABSOLUTE("value"),
-    #         )
-    #         .at(0xBEEF)
-    #         .with_label("value")
-    #         .with_value(42)
-    #         .as_computer()
-    #     )
-    #     computer.run_instruction()
-    #     self.assertEqual(computer.a, 42)
+    def test_lda_absolute_with_label(self) -> None:
+        computer = (
+            pycom.computer.Program.build(
+                pycom.computer.Instructions.LDA(
+                    pycom.computer.operands.Absolute("value"),
+                )
+            )
+            .at(0xBEEF)
+            .with_label("value")
+            .with_value(42)
+            .as_computer()
+        )
+        computer.run_instruction()
+        self.assertEqual(computer.a, 42)
 
     # def test_sta_absolute(self) -> None:
     #     computer = pycom.computer.Program.computer(
