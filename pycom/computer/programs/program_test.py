@@ -215,10 +215,12 @@ class ProgramTest(unittest.TestCase):
                 ),
                 (
                     pycom.computer.Program(),
-                    pycom.computer.Instructions.NOP,
+                    pycom.computer.Instructions.NOP(),
                     pycom.computer.Program(
                         data={
-                            0: pycom.computer.Instructions.NOP.value.opcode,
+                            0: pycom.computer.Instructions.NOP.value.operand_instance(
+                                pycom.computer.operands.None_,
+                            ).opcode,
                         },
                         next_address=1,
                     ),

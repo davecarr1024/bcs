@@ -5,43 +5,46 @@ import pycom
 
 class InstructionsTest(unittest.TestCase):
     def test_call(self) -> None:
-        for instructions, operands, expected in list[
+        for instructions, operand, expected in list[
             tuple[
                 pycom.computer.Instructions,
-                typing.Iterable[pycom.computer.programs.program.Value],
+                typing.Optional[pycom.computer.operands.Operand],
                 pycom.computer.Statement,
             ]
         ](
             [
                 (
                     pycom.computer.Instructions.NOP,
-                    [],
-                    pycom.computer.Operation(
-                        instruction=pycom.computer.Instructions.NOP,
+                    None,
+                    pycom.computer.operands.None_.Statement(
+                        opcode=pycom.computer.Instructions.NOP.value.operand_instance(
+                            pycom.computer.operands.None_
+                        ).opcode,
                     ),
                 ),
                 (
                     pycom.computer.Instructions.NOP,
-                    [
-                        1,
-                        "a",
-                    ],
-                    pycom.computer.Operation(
-                        instruction=pycom.computer.Instructions.NOP,
-                        operands=[
-                            1,
-                            "a",
-                        ],
+                    pycom.computer.operands.None_(),
+                    pycom.computer.operands.None_.Statement(
+                        opcode=pycom.computer.Instructions.NOP.value.operand_instance(
+                            pycom.computer.operands.None_
+                        ).opcode,
                     ),
                 ),
             ]
         ):
             with self.subTest(
                 instructions=instructions,
-                operands=operands,
+                operand=operand,
                 expected=expected,
             ):
-                self.assertEqual(
-                    instructions(*operands),
-                    expected,
-                )
+                if operand is not None:
+                    self.assertEqual(
+                        instructions(operand),
+                        expected,
+                    )
+                else:
+                    self.assertEqual(
+                        instructions(),
+                        expected,
+                    )

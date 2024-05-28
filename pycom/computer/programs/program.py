@@ -5,7 +5,6 @@ from pycom import byte, errorable
 Entry: typing.TypeAlias = typing.Union[
     int,
     str,
-    "instructions.Instructions",
     "statement.Statement",
 ]
 
@@ -111,8 +110,6 @@ class Program(errorable.Errorable):
                 return self.with_value(entry)
             case str():
                 return self.with_label(entry)
-            case instructions.Instructions():
-                return self.with_value(entry.value.opcode)
             case statement.Statement():
                 return self.with_statement(entry)
 
@@ -139,4 +136,3 @@ class Program(errorable.Errorable):
 
 from . import statement
 from pycom.computer import computer
-from pycom.computer.instructions import instructions

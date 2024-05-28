@@ -1,20 +1,187 @@
 import dataclasses
 import typing
-from pycom import controller
+from pycom import controller, errorable
 from pycom.computer.instructions import step as step_lib
+from pycom.computer.operands import operand
+from pycom.computer.programs import statement
 
 
 @dataclasses.dataclass(frozen=True, kw_only=True)
-class Instruction:
-    @dataclasses.dataclass(frozen=True)
-    class _StepsKey:
-        status_mask: int
-        status_value: int
+class Instruction(errorable.Errorable):
+    class OperandInstanceNotFound(errorable.Errorable.Error, KeyError): ...
 
-    opcode: int
-    _steps: dict[_StepsKey, list[step_lib.Step]] = dataclasses.field(
-        default_factory=dict
-    )
+    @dataclasses.dataclass(frozen=True, kw_only=True)
+    class OperandInstance:
+        @dataclasses.dataclass(frozen=True, kw_only=True)
+        class StatusInstanceKey:
+            status_mask: int = 0
+            status_value: int = 0
+
+        @dataclasses.dataclass(frozen=True, kw_only=True)
+        class StatusInstance:
+            steps: list[step_lib.Step]
+
+            def entries(
+                self,
+                *,
+                opcode: int,
+                status_mask: int = 0,
+                status_value: int = 0,
+            ) -> frozenset[controller.Controller.Entry]:
+                preamble = Instruction._preamble()
+                return preamble | Instruction._entries_for_steps(
+                    instruction=opcode,
+                    starting_instruction_counter=len(preamble),
+                    reset_instruction_counter=True,
+                    steps=self.steps,
+                    status_mask=status_mask,
+                    status_value=status_value,
+                )
+
+        opcode: int
+        status_instances: dict[
+            StatusInstanceKey,
+            StatusInstance,
+        ] = dataclasses.field(default_factory=dict)
+
+        def with_status_instances(
+            self,
+            status_instances: dict[
+                StatusInstanceKey,
+                StatusInstance,
+            ],
+        ) -> "Instruction.OperandInstance":
+            return Instruction.OperandInstance(
+                opcode=self.opcode,
+                status_instances=self.status_instances | status_instances,
+            )
+
+        def with_status_instance(
+            self,
+            *,
+            status_mask: int = 0,
+            status_value: int = 0,
+            steps: list[step_lib.Step],
+        ) -> "Instruction.OperandInstance":
+            return self.with_status_instances(
+                {
+                    self.StatusInstanceKey(
+                        status_mask=status_mask, status_value=status_value
+                    ): self.StatusInstance(
+                        steps=steps,
+                    )
+                },
+            )
+
+        @classmethod
+        def build(
+            cls,
+            *,
+            opcode: int,
+            status_mask: int = 0,
+            status_value: int = 0,
+            steps: list[step_lib.Step],
+        ) -> "Instruction.OperandInstance":
+            return Instruction.OperandInstance(
+                opcode=opcode,
+            ).with_status_instance(
+                status_mask=status_mask,
+                status_value=status_value,
+                steps=steps,
+            )
+
+        def entries(self) -> frozenset[controller.Controller.Entry]:
+            return frozenset().union(
+                *[
+                    status_instance.entries(
+                        opcode=self.opcode,
+                        status_mask=key.status_mask,
+                        status_value=key.status_value,
+                    )
+                    for key, status_instance in self.status_instances.items()
+                ]
+            )
+
+        def statement(self, operand: operand.Operand) -> statement.Statement:
+            return operand.statement(self.opcode)
+
+    operand_instances: dict[
+        typing.Type[operand.Operand],
+        OperandInstance,
+    ] = dataclasses.field(default_factory=dict)
+
+    def entries(self) -> frozenset[controller.Controller.Entry]:
+        return frozenset().union(
+            *[instance.entries() for instance in self.operand_instances.values()],
+        )
+
+    def operand_instance(
+        self, operand_type: typing.Type[operand.Operand]
+    ) -> OperandInstance:
+        if operand_type not in self.operand_instances:
+            raise self.OperandInstanceNotFound(
+                f"instruction {self} doesn't accept operand type {operand_type}"
+            )
+        return self.operand_instances[operand_type]
+
+    def statement(self, operand: operand.Operand) -> statement.Statement:
+        return self.operand_instance(type(operand)).statement(operand)
+
+    def with_operand_instances(
+        self,
+        operand_instances: dict[
+            typing.Type[operand.Operand],
+            OperandInstance,
+        ],
+    ) -> "Instruction":
+        return Instruction(
+            operand_instances=self.operand_instances | operand_instances,
+        )
+
+    def with_operand_instance(
+        self,
+        operand_type: typing.Type[operand.Operand],
+        operand_instance: OperandInstance,
+    ) -> "Instruction":
+        return self.with_operand_instances({operand_type: operand_instance})
+
+    def with_instance(
+        self,
+        *,
+        opcode: int,
+        operand_type: typing.Type[operand.Operand],
+        steps: list[step_lib.Step],
+        status_mask: int = 0,
+        status_value: int = 0,
+    ) -> "Instruction":
+        return self.with_operand_instances(
+            {
+                operand_type: self.OperandInstance.build(
+                    opcode=opcode,
+                    status_mask=status_mask,
+                    status_value=status_value,
+                    steps=steps,
+                ),
+            }
+        )
+
+    @classmethod
+    def build(
+        cls,
+        *,
+        opcode: int,
+        operand_type: typing.Type[operand.Operand],
+        steps: list[step_lib.Step],
+        status_mask: int = 0,
+        status_value: int = 0,
+    ) -> "Instruction":
+        return Instruction().with_instance(
+            opcode=opcode,
+            operand_type=operand_type,
+            steps=steps,
+            status_mask=status_mask,
+            status_value=status_value,
+        )
 
     @classmethod
     def step(cls, *controls: str) -> step_lib.Step:
@@ -120,42 +287,3 @@ class Instruction:
             status_value=0,
             steps=cls.load_from_pc("controller.instruction_buffer.in"),
         )
-
-    def entries(
-        self,
-    ) -> frozenset[controller.Controller.Entry]:
-        preamble = self._preamble()
-        entries: typing.MutableSet[controller.Controller.Entry] = set(preamble)
-        for key, steps in self._steps.items():
-            entries |= self._entries_for_steps(
-                instruction=self.opcode,
-                starting_instruction_counter=len(preamble),
-                reset_instruction_counter=True,
-                status_mask=key.status_mask,
-                status_value=key.status_value,
-                steps=steps,
-            )
-        return frozenset(entries)
-
-    def _with_steps(self, steps: dict[_StepsKey, list[step_lib.Step]]) -> "Instruction":
-        return Instruction(
-            opcode=self.opcode,
-            _steps=self._steps | steps,
-        )
-
-    def with_steps_for_status(
-        self, status_mask: int, status_value: int, *steps: step_lib.Step
-    ) -> "Instruction":
-        return self._with_steps(
-            {self._StepsKey(status_mask, status_value): list(steps)}
-        )
-
-    @classmethod
-    def build(
-        cls,
-        opcode: int,
-        *steps: step_lib.Step,
-    ) -> "Instruction":
-        return Instruction(
-            opcode=opcode,
-        ).with_steps_for_status(0, 0, *steps)
