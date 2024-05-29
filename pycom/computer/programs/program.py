@@ -1,16 +1,16 @@
 import dataclasses
 import typing
-from pycom import byte, errorable
+from pycom import errorable
 
 Entry: typing.TypeAlias = typing.Union[
-    int,
-    str,
+    "reference.Reference",
     "statement.Statement",
 ]
 
+
 Value: typing.TypeAlias = typing.Union[
     int,
-    str,
+    "reference.Reference",
 ]
 
 
@@ -18,14 +18,38 @@ Value: typing.TypeAlias = typing.Union[
 class Program(errorable.Errorable):
     class LabelNotFoundError(errorable.Errorable.Error, KeyError): ...
 
-    data: typing.Mapping[int, Value] = dataclasses.field(default_factory=dict)
+    @dataclasses.dataclass(frozen=True)
+    class Output:
+        program: "Program"
+        data: dict[int, int] = dataclasses.field(default_factory=dict)
+
+        def with_data(self, data: dict[int, int]) -> "Program.Output":
+            return Program.Output(
+                self.program,
+                self.data | data,
+            )
+
+        def with_values_at(self, address: int, *values: int) -> "Program.Output":
+            return self.with_data(
+                {address + i: value for i, value in enumerate(values)}
+            )
+
+        def with_value_at(self, address: int, value: int) -> "Program.Output":
+            return self.with_values_at(address, value)
+
+        def as_computer(self) -> "computer.Computer":
+            return computer.Computer(data=self.data)
+
+    data: typing.Mapping[int, "reference.Reference"] = dataclasses.field(
+        default_factory=dict
+    )
     labels: typing.Mapping[str, int] = dataclasses.field(default_factory=dict)
     next_address: int = 0
 
     def with_(
         self,
         *,
-        data: typing.Optional[typing.Mapping[int, Value]] = None,
+        data: typing.Optional[typing.Mapping[int, "reference.Reference"]] = None,
         labels: typing.Optional[typing.Mapping[str, int]] = None,
         next_address: typing.Optional[int] = None,
     ) -> "Program":
@@ -44,72 +68,60 @@ class Program(errorable.Errorable):
             case str():
                 return self.with_(next_address=self.label(next_address))
 
-    def _offset_for_value(self, value: Value) -> int:
+    @classmethod
+    def _value(cls, value: Value) -> "reference.Reference":
         match value:
             case int():
-                return 1
-            case str():
-                return 2
+                return literal.Literal(value)
+            case reference.Reference():
+                return value
 
     def with_value_at(
         self,
         address: int,
-        value: int,
+        value: Value,
     ) -> "Program":
-        return self.with_(data={address: value})
+        return self.with_(data={address: self._value(value)})
 
     def with_value(self, value: Value) -> "Program":
-        return self.with_(
-            data={self.next_address: value},
-            next_address=self.next_address + self._offset_for_value(value),
+        value = self._value(value)
+        return self.with_value_at(self.next_address, value).at(
+            self.next_address + len(value)
         )
 
     def with_values(self, *values: Value) -> "Program":
-        data: typing.MutableMapping[int, Value] = {}
-        offset = 0
+        program = self
         for value in values:
-            data[self.next_address + offset] = value
-            offset += self._offset_for_value(value)
-        return self.with_(
-            data=data,
-            next_address=self.next_address + offset,
-        )
+            program = program.with_value(value)
+        return program
 
-    def with_label_at(self, name: str, address: int) -> "Program":
+    def with_label_at(self, address: int, name: str) -> "Program":
         return self.with_(labels={name: address})
 
     def with_label(self, name: str) -> "Program":
-        return self.with_label_at(name, self.next_address)
+        return self.with_label_at(self.next_address, name)
 
-    def with_statement(self, statemewnt: "statement.Statement") -> "Program":
-        return statemewnt(self)
+    def with_statement(self, statement: "statement.Statement") -> "Program":
+        return statement(self)
 
     def label(self, name: str) -> int:
         if name not in self.labels:
             raise self.LabelNotFoundError(f"unknown label {name}")
         return self.labels[name]
 
-    def finalize_data(self) -> typing.Mapping[int, int]:
-        data: typing.MutableMapping[int, int] = {}
-        for address, value in self.data.items():
-            match value:
-                case int():
-                    data[address] = value
-                case str():
-                    data[address], data[address + 1], *_ = byte.Byte.partition(
-                        self.label(value)
-                    )
-        return data
+    def output(self) -> Output:
+        output = self.Output(self)
+        for address, reference in self.data.items():
+            output = reference(output, address)
+        return output
 
     def as_computer(self) -> "computer.Computer":
-        return computer.Computer(data=self.finalize_data())
+        return self.output().as_computer()
 
     def with_entry(self, entry: Entry) -> "Program":
         match entry:
-            case int():
+            case reference.Reference():
                 return self.with_value(entry)
-            case str():
-                return self.with_label(entry)
             case statement.Statement():
                 return self.with_statement(entry)
 
@@ -136,3 +148,4 @@ class Program(errorable.Errorable):
 
 from . import statement
 from pycom.computer import computer
+from pycom.computer.references import reference, literal

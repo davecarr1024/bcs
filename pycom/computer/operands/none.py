@@ -1,6 +1,6 @@
 import typing
 from pycom.computer.operands import operand
-from pycom.computer.programs import program, statement
+from pycom.computer.programs import statement
 
 
 class None_(operand.Operand):

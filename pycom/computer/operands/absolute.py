@@ -1,6 +1,7 @@
 import dataclasses
 import typing
 from pycom import byte
+from pycom.computer import references
 from pycom.computer.operands import operand
 from pycom.computer.programs import program, statement
 
@@ -13,19 +14,13 @@ class Absolute(operand.Operand):
 
         @typing.override
         def __call__(self, program: program.Program) -> program.Program:
+            program = super().__call__(program)
             match self.value:
                 case int():
-                    high, low, *_ = byte.Byte.partition(self.value)
-                    return (
-                        super()
-                        .__call__(program)
-                        .with_values(
-                            high,
-                            low,
-                        )
-                    )
+                    high, low = byte.Byte.partition(self.value)
+                    return program.with_value(references.Pair.for_value(self.value))
                 case str():
-                    return super().__call__(program).with_value(self.value)
+                    return program.with_value(references.Absolute(self.value))
 
     value: int | str
 

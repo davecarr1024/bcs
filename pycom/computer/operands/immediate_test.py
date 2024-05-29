@@ -8,5 +8,8 @@ class ImmediateTest(unittest.TestCase):
             pycom.computer.Program().with_statement(
                 pycom.computer.operands.Immediate(1).statement(2),
             ),
-            pycom.computer.Program().with_values(2, 1),
+            pycom.computer.Program().with_values(
+                pycom.computer.references.Literal(2),
+                pycom.computer.references.Literal(1),
+            ),
         )

@@ -8,5 +8,7 @@ class NoneTest(unittest.TestCase):
             pycom.computer.Program().with_statement(
                 pycom.computer.operands.None_().statement(1),
             ),
-            pycom.computer.Program().with_value(1),
+            pycom.computer.Program().with_value(
+                pycom.computer.references.Literal(1),
+            ),
         )

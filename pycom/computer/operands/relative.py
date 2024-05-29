@@ -1,5 +1,6 @@
 import dataclasses
 import typing
+from pycom.computer import references
 from pycom.computer.operands import operand
 from pycom.computer.programs import program, statement
 
@@ -8,13 +9,18 @@ from pycom.computer.programs import program, statement
 class Relative(operand.Operand):
     @dataclasses.dataclass(frozen=True, kw_only=True)
     class Statement(operand.Operand.Statement):
-        value: int
+        value: int | str
 
         @typing.override
         def __call__(self, program: program.Program) -> program.Program:
-            return super().__call__(program).with_value(self.value)
+            program = super().__call__(program)
+            match self.value:
+                case int():
+                    return program.with_value(references.Literal(self.value))
+                case str():
+                    return program.with_value(references.Relative(self.value))
 
-    value: int
+    value: int | str
 
     @typing.override
     def statement(self, opcode: int) -> statement.Statement:
