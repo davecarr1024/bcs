@@ -9,6 +9,11 @@ class DuplicateOpcodeError(errorable.Errorable.Error): ...
 
 
 class Instructions(errorable.Errorable, enum.Enum):
+    HLT = instruction.Instruction.build(
+        opcode=0x00,
+        operand_type=operands.None_,
+        steps=[instruction.Instruction.step("clock.disable")],
+    )
     NOP = instruction.Instruction.build(
         opcode=0xEA,
         operand_type=operands.None_,

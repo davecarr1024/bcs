@@ -2,6 +2,7 @@ import typing
 from pycom.components import (
     alu,
     bus,
+    clock,
     component,
     controller,
     memory,
@@ -28,6 +29,7 @@ class Computer(component.Component):
         self.controller = controller.Controller(
             self.bus, instructions.Instructions.entries()
         )
+        self.clock = clock.Clock()
         self.alu = alu.ALU(self.bus)
         super().__init__(
             name or "computer",
@@ -41,6 +43,7 @@ class Computer(component.Component):
                     self.__program_counter,
                     self.controller,
                     self.alu,
+                    self.clock,
                 }
             ),
         )
@@ -98,3 +101,6 @@ class Computer(component.Component):
 
     def run_instructions(self, num: int) -> int:
         return self.controller.run_instructions(num)
+
+    def run(self) -> int:
+        return self.clock.run()
