@@ -119,8 +119,8 @@ class ALU(component.Component):
             self.status &= ~self.ZERO
 
     @typing.override
-    def update(self) -> None:
-        super().update()
+    def tick(self) -> None:
+        super().tick()
         if self.__carry_set.value:
             self.carry = True
         elif self.__carry_clear.value:

@@ -14,6 +14,9 @@ from pycom.programs import program
 
 
 class Computer(component.Component):
+    STACK_POINTER_ADDR = 0x00FE
+    STACK_ADDR = 0x0100
+
     def __init__(
         self,
         name: typing.Optional[str] = None,
@@ -93,9 +96,9 @@ class Computer(component.Component):
     def status(self, status: int) -> None:
         self.alu.status = status
 
-    def update(self) -> None:
+    def tick(self) -> None:
         self.controller.apply(self.status)
-        super().update()
+        super().tick()
 
     def run_instruction(self) -> int:
         return self.controller.run_instruction()

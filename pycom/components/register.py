@@ -59,10 +59,10 @@ class Register(component.Component):
         self._write()
 
     @typing.override
-    def update(self) -> None:
+    def tick(self) -> None:
         self._read()
         self._write()
-        super().update()
+        super().tick()
 
     def _read(self) -> None:
         if self.in_:

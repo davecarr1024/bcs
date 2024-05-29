@@ -64,9 +64,9 @@ class ProgramCounter(component.Component):
         self._reset.value = reset
 
     @typing.override
-    def update(self) -> None:
+    def tick(self) -> None:
         if self.increment:
             self.value += 1
         elif self.reset:
             self.value = 0
-        super().update()
+        super().tick()

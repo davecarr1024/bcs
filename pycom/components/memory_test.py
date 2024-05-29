@@ -39,10 +39,10 @@ class MemoryTest(unittest.TestCase):
         memory = pycom.Memory(bus)
         memory.set_controls("address_high_byte.in")
         bus.value = 0xBE
-        memory.update()
+        memory.tick()
         memory.set_controls("address_low_byte.in")
         bus.value = 0xEF
-        memory.update()
+        memory.tick()
         self.assertEqual(memory.address, 0xBEEF)
 
     def test_data_in(self) -> None:
@@ -52,7 +52,7 @@ class MemoryTest(unittest.TestCase):
         memory.set_controls("in")
         bus.value = 2
         self.assertEqual(memory.value, 0)
-        memory.update()
+        memory.tick()
         self.assertDictEqual(memory.data, {1: 2})
 
     def test_data_out(self) -> None:
@@ -61,5 +61,19 @@ class MemoryTest(unittest.TestCase):
         memory.address = 1
         memory.set_controls("out")
         self.assertEqual(bus.value, 2)
-        memory.update()
+        memory.tick()
         self.assertEqual(bus.value, 2)
+
+    def test_get_item(self) -> None:
+        self.assertDictEqual(
+            dict(pycom.Memory(pycom.Bus(), data={1: 2})),
+            {1: 2},
+        )
+
+    def test_set_item(self) -> None:
+        memory = pycom.Memory(pycom.Bus())
+        memory[1] = 2
+        self.assertDictEqual(
+            dict(memory),
+            {1: 2},
+        )

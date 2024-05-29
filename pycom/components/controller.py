@@ -113,10 +113,10 @@ class Controller(component.Component):
             )
 
     def run_instruction(self) -> int:
-        self.root.update()
+        self.root.tick()
         updates = 1
         while self.instruction_counter:
-            self.root.update()
+            self.root.tick()
             updates += 1
         return updates
 

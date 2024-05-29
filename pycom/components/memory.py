@@ -3,7 +3,10 @@ import typing
 from pycom.components import bus, byte, component, control, register
 
 
-class Memory(component.Component):
+class Memory(
+    component.Component,
+    typing.MutableMapping[int, int],
+):
     def __init__(
         self,
         bus: bus.Bus,
@@ -45,6 +48,26 @@ class Memory(component.Component):
                 }
             ),
         )
+
+    @typing.override
+    def __len__(self) -> int:
+        return len(self.data)
+
+    @typing.override
+    def __iter__(self) -> typing.Iterator[int]:
+        return iter(self.data)
+
+    @typing.override
+    def __getitem__(self, address: int) -> int:
+        return self.data[address].value
+
+    @typing.override
+    def __setitem__(self, address: int, value: int) -> None:
+        self._data[address] = byte.Byte(value)
+
+    @typing.override
+    def __delitem__(self, address: int) -> None:
+        del self._data[address]
 
     @typing.override
     def _str_line(self) -> str:
@@ -138,10 +161,10 @@ class Memory(component.Component):
         self._write()
 
     @typing.override
-    def update(self) -> None:
+    def tick(self) -> None:
         self._read()
         self._write()
-        super().update()
+        super().tick()
 
     def _read(self) -> None:
         if self.in_:

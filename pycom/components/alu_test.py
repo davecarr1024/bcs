@@ -28,14 +28,14 @@ class ALUTest(unittest.TestCase):
         alu = pycom.ALU(pycom.Bus())
         alu.carry = False
         alu.set_controls("carry_set")
-        alu.update()
+        alu.tick()
         self.assertTrue(alu.carry)
 
     def test_carry_clear(self) -> None:
         alu = pycom.ALU(pycom.Bus())
         alu.carry = True
         alu.set_controls("carry_clear")
-        alu.update()
+        alu.tick()
         self.assertFalse(alu.carry)
 
     def test_idle(self) -> None:
@@ -44,7 +44,7 @@ class ALUTest(unittest.TestCase):
         alu.rhs = 2
         alu.result = 0
         alu.add = False
-        alu.update()
+        alu.tick()
         self.assertEqual(alu.result, 0)
         self.assertTrue(alu.zero)
 
@@ -54,7 +54,7 @@ class ALUTest(unittest.TestCase):
         alu.rhs = 2
         alu.result = 0
         alu.add = True
-        alu.update()
+        alu.tick()
         self.assertEqual(alu.result, 3)
         self.assertFalse(alu.carry)
         self.assertFalse(alu.zero)
@@ -66,7 +66,7 @@ class ALUTest(unittest.TestCase):
         alu.result = 0
         alu.add = True
         alu.carry = True
-        alu.update()
+        alu.tick()
         self.assertEqual(alu.result, 4)
         self.assertFalse(alu.carry)
         self.assertFalse(alu.zero)
@@ -78,7 +78,7 @@ class ALUTest(unittest.TestCase):
         alu.result = 0
         alu.add = True
         alu.carry = False
-        alu.update()
+        alu.tick()
         self.assertEqual(alu.result, 0)
         self.assertTrue(alu.carry)
         self.assertTrue(alu.zero)
@@ -90,7 +90,7 @@ class ALUTest(unittest.TestCase):
         alu.result = 0
         alu.add = True
         alu.carry = True
-        alu.update()
+        alu.tick()
         self.assertEqual(alu.result, 1)
         self.assertTrue(alu.carry)
         self.assertFalse(alu.zero)
@@ -99,7 +99,7 @@ class ALUTest(unittest.TestCase):
         alu = pycom.ALU(pycom.Bus())
         alu.lhs = 1
         alu.inc = True
-        alu.update()
+        alu.tick()
         self.assertEqual(alu.result, 2)
         self.assertFalse(alu.zero)
 
@@ -107,6 +107,6 @@ class ALUTest(unittest.TestCase):
         alu = pycom.ALU(pycom.Bus())
         alu.lhs = 1
         alu.dec = True
-        alu.update()
+        alu.tick()
         self.assertEqual(alu.result, 0)
         self.assertTrue(alu.zero)

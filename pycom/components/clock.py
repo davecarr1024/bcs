@@ -27,6 +27,6 @@ class Clock(component.Component):
         num_updates: int = 0
         self.disable = False
         while not self.disable:
-            self.root.update()
+            self.root.tick()
             num_updates += 1
         return num_updates

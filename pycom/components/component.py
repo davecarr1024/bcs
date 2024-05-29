@@ -168,9 +168,9 @@ class Component(validatable.Validatable):
         for child in self.children:
             child.validate()
 
-    def update(self) -> None:
+    def tick(self) -> None:
         for child in self.children:
-            child.update()
+            child.tick()
 
 
 from . import control as control_lib

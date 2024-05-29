@@ -8,7 +8,7 @@ class ProgramCounterTest(unittest.TestCase):
         pc = pycom.ProgramCounter(pycom.Bus())
         pc.low_byte = 1
         pc.high_byte = 2
-        pc.update()
+        pc.tick()
         self.assertEqual(pc.low_byte, 1)
         self.assertEqual(pc.high_byte, 2)
 
@@ -17,7 +17,7 @@ class ProgramCounterTest(unittest.TestCase):
         pc.low_byte = 1
         pc.high_byte = 2
         pc.increment = True
-        pc.update()
+        pc.tick()
         self.assertEqual(pc.low_byte, 2)
         self.assertEqual(pc.high_byte, 2)
 
@@ -27,7 +27,7 @@ class ProgramCounterTest(unittest.TestCase):
         pc.low_byte = pycom.Byte.max() - 1
         pc.high_byte = 0
         pc.increment = True
-        pc.update()
+        pc.tick()
         self.assertEqual(pc.low_byte, 0)
         self.assertEqual(pc.high_byte, 1)
 
@@ -36,7 +36,7 @@ class ProgramCounterTest(unittest.TestCase):
         pc.low_byte = 1
         pc.high_byte = 2
         pc.reset = True
-        pc.update()
+        pc.tick()
         self.assertEqual(pc.low_byte, 0)
         self.assertEqual(pc.high_byte, 0)
 

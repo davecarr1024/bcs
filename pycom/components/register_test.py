@@ -22,7 +22,7 @@ class RegisterTest(unittest.TestCase):
         register = pycom.Register(bus, "a")
         bus.value = 1
         register.value = 2
-        register.update()
+        register.tick()
         self.assertEqual(bus.value, 1)
         self.assertEqual(register.value, 2)
 
@@ -34,7 +34,7 @@ class RegisterTest(unittest.TestCase):
         register.value = 2
         self.assertEqual(bus.value, 1)
         self.assertEqual(register.value, 2)
-        register.update()
+        register.tick()
         self.assertEqual(bus.value, 1)
         self.assertEqual(register.value, 1)
 
@@ -46,7 +46,7 @@ class RegisterTest(unittest.TestCase):
         register.out = True
         self.assertEqual(bus.value, 2)
         self.assertEqual(register.value, 2)
-        register.update()
+        register.tick()
         self.assertEqual(bus.value, 2)
         self.assertEqual(register.value, 2)
 
@@ -59,6 +59,6 @@ class RegisterTest(unittest.TestCase):
         register.out = True
         self.assertEqual(bus.value, 2)
         self.assertEqual(register.value, 2)
-        register.update()
+        register.tick()
         self.assertEqual(bus.value, 2)
         self.assertEqual(register.value, 2)
