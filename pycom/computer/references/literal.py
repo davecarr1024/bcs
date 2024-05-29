@@ -16,6 +16,7 @@ class Literal(reference.Reference):
     ) -> program.Program.Output:
         return output.with_value_at(address, self.value)
 
+    @classmethod
     @typing.override
-    def __len__(self) -> int:
+    def size(cls) -> int:
         return 1

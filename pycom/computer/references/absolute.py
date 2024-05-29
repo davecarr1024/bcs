@@ -18,6 +18,7 @@ class Absolute(reference.Reference):
         high, low, *_ = byte.Byte.partition(output.program.label(self.value))
         return output.with_values_at(address, high, low)
 
+    @classmethod
     @typing.override
-    def __len__(self) -> int:
+    def size(cls) -> int:
         return 2

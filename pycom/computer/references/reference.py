@@ -9,8 +9,9 @@ class Reference(abc.ABC):
         address: int,
     ) -> "program.Program.Output": ...
 
+    @classmethod
     @abc.abstractmethod
-    def __len__(self) -> int: ...
+    def size(cls) -> int: ...
 
 
 from pycom.computer.programs import program

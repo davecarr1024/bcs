@@ -31,6 +31,7 @@ class Pair(reference.Reference):
             self.low,
         )
 
+    @classmethod
     @typing.override
-    def __len__(self) -> int:
+    def size(cls) -> int:
         return 2

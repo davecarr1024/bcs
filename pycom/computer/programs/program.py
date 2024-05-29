@@ -86,7 +86,7 @@ class Program(errorable.Errorable):
     def with_value(self, value: Value) -> "Program":
         value = self._value(value)
         return self.with_value_at(self.next_address, value).at(
-            self.next_address + len(value)
+            self.next_address + value.size()
         )
 
     def with_values(self, *values: Value) -> "Program":
