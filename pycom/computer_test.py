@@ -8,7 +8,7 @@ class ComputerTest(unittest.TestCase):
         self.assertEqual(computer.controller.instruction_counter, 0)
 
     def test_nop(self) -> None:
-        computer = pycom.Program.computer(
+        computer = pycom.Computer.build(
             pycom.Instructions.NOP(),
         )
         computer.run_instruction()
@@ -16,7 +16,7 @@ class ComputerTest(unittest.TestCase):
         self.assertEqual(computer.program_counter, 1)
 
     def test_lda_immediate(self) -> None:
-        computer = pycom.Program.computer(
+        computer = pycom.Computer.build(
             pycom.Instructions.LDA(
                 pycom.operands.Immediate(42),
             ),
@@ -53,7 +53,7 @@ class ComputerTest(unittest.TestCase):
         self.assertEqual(computer.a, 42)
 
     def test_sta_absolute(self) -> None:
-        computer = pycom.Program.computer(
+        computer = pycom.Computer.build(
             pycom.Instructions.LDA(
                 pycom.operands.Immediate(42),
             ),
@@ -81,7 +81,7 @@ class ComputerTest(unittest.TestCase):
         self.assertEqual(computer.memory.data[0xBEEF], 42)
 
     def test_clc(self) -> None:
-        computer = pycom.Program.computer(
+        computer = pycom.Computer.build(
             pycom.Instructions.CLC(),
         )
         computer.alu.carry = True
@@ -89,7 +89,7 @@ class ComputerTest(unittest.TestCase):
         self.assertFalse(computer.alu.carry)
 
     def test_sec(self) -> None:
-        computer = pycom.Program.computer(
+        computer = pycom.Computer.build(
             pycom.Instructions.SEC(),
         )
         computer.alu.carry = False
@@ -97,7 +97,7 @@ class ComputerTest(unittest.TestCase):
         self.assertTrue(computer.alu.carry)
 
     def test_adc_immediate(self) -> None:
-        computer = pycom.Program.computer(
+        computer = pycom.Computer.build(
             pycom.Instructions.LDA(
                 pycom.operands.Immediate(1),
             ),
@@ -221,7 +221,7 @@ class ComputerTest(unittest.TestCase):
         )
 
     def test_ldx_immediate(self) -> None:
-        computer = pycom.Program.computer(
+        computer = pycom.Computer.build(
             pycom.Instructions.LDX(pycom.operands.Immediate(1)),
         )
         computer.run_instruction()
@@ -253,7 +253,7 @@ class ComputerTest(unittest.TestCase):
         self.assertEqual(computer.memory.data[0xBEEF], 42)
 
     def test_inx(self) -> None:
-        computer = pycom.Program.computer(
+        computer = pycom.Computer.build(
             pycom.Instructions.LDX(pycom.operands.Immediate(1)),
             pycom.Instructions.INX(),
         )
@@ -261,7 +261,7 @@ class ComputerTest(unittest.TestCase):
         self.assertEqual(computer.x, 2)
 
     def test_dex(self) -> None:
-        computer = pycom.Program.computer(
+        computer = pycom.Computer.build(
             pycom.Instructions.LDX(pycom.operands.Immediate(2)),
             pycom.Instructions.DEX(),
         )
@@ -269,14 +269,14 @@ class ComputerTest(unittest.TestCase):
         self.assertEqual(computer.x, 1)
 
     def test_ldy_immediate(self) -> None:
-        computer = pycom.Program.computer(
+        computer = pycom.Computer.build(
             pycom.Instructions.LDY(pycom.operands.Immediate(1)),
         )
         computer.run_instruction()
         self.assertEqual(computer.y, 1)
 
     def test_ldy_absolute(self) -> None:
-        computer = pycom.Program.computer(
+        computer = pycom.Computer.build(
             pycom.Instructions.LDY(pycom.operands.Absolute("data")),
             "data",
             1,
@@ -297,7 +297,7 @@ class ComputerTest(unittest.TestCase):
         self.assertEqual(computer.memory.data[0xBEEF], 42)
 
     def test_iny(self) -> None:
-        computer = pycom.Program.computer(
+        computer = pycom.Computer.build(
             pycom.Instructions.LDY(pycom.operands.Immediate(1)),
             pycom.Instructions.INY(),
         )
@@ -305,7 +305,7 @@ class ComputerTest(unittest.TestCase):
         self.assertEqual(computer.y, 2)
 
     def test_dey(self) -> None:
-        computer = pycom.Program.computer(
+        computer = pycom.Computer.build(
             pycom.Instructions.LDY(pycom.operands.Immediate(2)),
             pycom.Instructions.DEY(),
         )
@@ -314,7 +314,7 @@ class ComputerTest(unittest.TestCase):
 
     def test_multiply(self) -> None:
         # a = x * y
-        computer = pycom.Program.computer(
+        computer = pycom.Computer.build(
             pycom.Instructions.LDA(pycom.operands.Immediate(0)),
             pycom.Instructions.LDX(pycom.operands.Immediate(3)),
             pycom.Instructions.LDY(pycom.operands.Immediate(5)),

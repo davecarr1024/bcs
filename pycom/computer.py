@@ -10,6 +10,7 @@ from pycom.components import (
     register,
 )
 from pycom.instructions import instructions
+from pycom.programs import program
 
 
 class Computer(component.Component):
@@ -104,3 +105,11 @@ class Computer(component.Component):
 
     def run(self) -> int:
         return self.clock.run()
+
+    @classmethod
+    def build(cls, *entries: program.Entry) -> "Computer":
+        return cls.for_program(program.Program.build(*entries))
+
+    @classmethod
+    def for_program(cls, program: program.Program) -> "Computer":
+        return program.as_computer()
