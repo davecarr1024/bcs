@@ -55,23 +55,44 @@ class Instructions(errorable.Errorable, enum.Enum):
             )
         ],
     )
-    ADC = instruction.Instruction().with_instance(
-        operand_type=operands.Immediate,
-        opcode=0x69,
-        steps=instruction.Instruction.steps(
-            *instruction.Instruction.load_from_pc("alu.lhs.in"),
-            instruction.Instruction.step(
-                "alu.rhs.in",
-                "a.out",
+    ADC = (
+        instruction.Instruction()
+        .with_instance(
+            operand_type=operands.Immediate,
+            opcode=0x69,
+            steps=instruction.Instruction.steps(
+                *instruction.Instruction.load_from_pc("alu.lhs.in"),
+                instruction.Instruction.step(
+                    "alu.rhs.in",
+                    "a.out",
+                ),
+                instruction.Instruction.step(
+                    "alu.add",
+                ),
+                instruction.Instruction.step(
+                    "alu.result.out",
+                    "a.in",
+                ),
             ),
-            instruction.Instruction.step(
-                "alu.add",
+        )
+        .with_instance(
+            operand_type=operands.Absolute,
+            opcode=0x6D,
+            steps=instruction.Instruction.steps(
+                *instruction.Instruction.load_from_addr_at_pc("alu.lhs.in"),
+                instruction.Instruction.step(
+                    "alu.rhs.in",
+                    "a.out",
+                ),
+                instruction.Instruction.step(
+                    "alu.add",
+                ),
+                instruction.Instruction.step(
+                    "alu.result.out",
+                    "a.in",
+                ),
             ),
-            instruction.Instruction.step(
-                "alu.result.out",
-                "a.in",
-            ),
-        ),
+        )
     )
     JMP = instruction.Instruction().with_instance(
         operand_type=operands.Absolute,
@@ -236,7 +257,12 @@ class Instructions(errorable.Errorable, enum.Enum):
         self,
         operand: typing.Optional[operands.Operand] = None,
     ) -> "statement.Statement":
-        return self.value.statement(operand or operands.None_())
+        try:
+            return self.value.statement(operand or operands.None_())
+        except instruction.Instruction.OperandInstanceNotFound:
+            raise self.Error(
+                f"instruction {self.name} doesn't accept operand type {type(operand)}"
+            )
 
 
 from pycom.programs import statement

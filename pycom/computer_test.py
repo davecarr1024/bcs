@@ -108,6 +108,24 @@ class ComputerTest(unittest.TestCase):
         computer.run_instructions(2)
         self.assertEqual(computer.a, 3)
 
+    def test_adc_absolute(self) -> None:
+        computer = (
+            pycom.Program.build(
+                pycom.Instructions.LDA(
+                    pycom.operands.Immediate(1),
+                ),
+                pycom.Instructions.ADC(
+                    pycom.operands.Absolute("value"),
+                ),
+            )
+            .at(0xBEEF)
+            .with_label("value")
+            .with_value(2)
+            .as_computer()
+        )
+        computer.run()
+        self.assertEqual(computer.a, 3)
+
     def test_jmp_absolute(self) -> None:
         computer = (
             pycom.Program.build(
@@ -293,3 +311,22 @@ class ComputerTest(unittest.TestCase):
         )
         computer.run_instructions(2)
         self.assertEqual(computer.y, 1)
+
+    def test_multiply(self) -> None:
+        # a = x * y
+        computer = pycom.Program.computer(
+            pycom.Instructions.LDA(pycom.operands.Immediate(0)),
+            pycom.Instructions.LDX(pycom.operands.Immediate(3)),
+            pycom.Instructions.LDY(pycom.operands.Immediate(5)),
+            "loop",
+            pycom.Instructions.STY(pycom.operands.Absolute("tmp")),
+            pycom.Instructions.ADC(pycom.operands.Absolute("tmp")),
+            pycom.Instructions.DEX(),
+            pycom.Instructions.BNE(pycom.operands.Relative("done")),
+            pycom.Instructions.JMP(pycom.operands.Absolute("loop")),
+            "done",
+            pycom.Instructions.HLT(),
+            "tmp",
+        )
+        computer.run()
+        self.assertEqual(computer.a, 15)
