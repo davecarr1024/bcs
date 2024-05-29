@@ -163,13 +163,41 @@ class ComputerTest(unittest.TestCase):
             0xBE42,
         )
 
-    # def test_bne_false(self) -> None:
-    #     computer = pycom.computer.Program.computer(
-    #         pycom.computer.Instructions.BNE(0x42),
-    #     )
-    #     computer.alu.zero = False
-    #     computer.run_instruction()
-    #     self.assertEqual(
-    #         computer.program_counter,
-    #         0x2,
-    #     )
+    def test_bne_false(self) -> None:
+        computer = (
+            pycom.computer.Program()
+            .at(0xBEEF)
+            .with_entry(
+                pycom.computer.Instructions.BNE(
+                    pycom.computer.operands.Relative(0x42),
+                ),
+            )
+            .as_computer()
+        )
+        computer.alu.zero = False
+        computer.program_counter = 0xBEEF
+        computer.run_instruction()
+        self.assertEqual(
+            computer.program_counter,
+            0xBEEF + 2,
+        )
+
+    def test_bne_false_label(self) -> None:
+        computer = (
+            pycom.computer.Program()
+            .at(0xBEEF)
+            .with_entry(
+                pycom.computer.Instructions.BNE(
+                    pycom.computer.operands.Relative("a"),
+                ),
+            )
+            .with_label_at(0xBE42, "a")
+            .as_computer()
+        )
+        computer.alu.zero = False
+        computer.program_counter = 0xBEEF
+        computer.run_instruction()
+        self.assertEqual(
+            computer.program_counter,
+            0xBEEF + 2,
+        )
