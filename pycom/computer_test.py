@@ -201,3 +201,95 @@ class ComputerTest(unittest.TestCase):
             computer.program_counter,
             0xBEEF + 2,
         )
+
+    def test_ldx_immediate(self) -> None:
+        computer = pycom.Program.computer(
+            pycom.Instructions.LDX(pycom.operands.Immediate(1)),
+        )
+        computer.run_instruction()
+        self.assertEqual(computer.x, 1)
+
+    def test_ldx_absolute(self) -> None:
+        computer = (
+            pycom.Program.build(
+                pycom.Instructions.LDX(pycom.operands.Absolute("value")),
+            )
+            .at(0xBEEF)
+            .with_label("value")
+            .with_value(42)
+            .as_computer()
+        )
+        computer.run_instruction()
+        self.assertEqual(computer.x, 42)
+
+    def test_stx_absolute(self) -> None:
+        computer = (
+            pycom.Program.build(
+                pycom.Instructions.LDX(pycom.operands.Immediate(42)),
+                pycom.Instructions.STX(pycom.operands.Absolute("value")),
+            )
+            .with_label_at(0xBEEF, "value")
+            .as_computer()
+        )
+        computer.run_instructions(2)
+        self.assertEqual(computer.memory.data[0xBEEF], 42)
+
+    def test_inx(self) -> None:
+        computer = pycom.Program.computer(
+            pycom.Instructions.LDX(pycom.operands.Immediate(1)),
+            pycom.Instructions.INX(),
+        )
+        computer.run_instructions(2)
+        self.assertEqual(computer.x, 2)
+
+    def test_dex(self) -> None:
+        computer = pycom.Program.computer(
+            pycom.Instructions.LDX(pycom.operands.Immediate(2)),
+            pycom.Instructions.DEX(),
+        )
+        computer.run_instructions(2)
+        self.assertEqual(computer.x, 1)
+
+    def test_ldy_immediate(self) -> None:
+        computer = pycom.Program.computer(
+            pycom.Instructions.LDY(pycom.operands.Immediate(1)),
+        )
+        computer.run_instruction()
+        self.assertEqual(computer.y, 1)
+
+    def test_ldy_absolute(self) -> None:
+        computer = pycom.Program.computer(
+            pycom.Instructions.LDY(pycom.operands.Absolute("data")),
+            "data",
+            1,
+        )
+        computer.run_instruction()
+        self.assertEqual(computer.y, 1)
+
+    def test_sty_absolute(self) -> None:
+        computer = (
+            pycom.Program.build(
+                pycom.Instructions.LDY(pycom.operands.Immediate(42)),
+                pycom.Instructions.STY(pycom.operands.Absolute("value")),
+            )
+            .with_label_at(0xBEEF, "value")
+            .as_computer()
+        )
+        computer.run_instructions(2)
+        self.assertEqual(computer.memory.data[0xBEEF], 42)
+
+    def test_iny(self) -> None:
+        computer = pycom.Program.computer(
+            pycom.Instructions.LDY(pycom.operands.Immediate(1)),
+            pycom.Instructions.INY(),
+        )
+        computer.run_instructions(2)
+        self.assertEqual(computer.y, 2)
+
+    def test_dey(self) -> None:
+        computer = pycom.Program.computer(
+            pycom.Instructions.LDY(pycom.operands.Immediate(2)),
+            pycom.Instructions.DEY(),
+        )
+        computer.run_instructions(2)
+        self.assertEqual(computer.y, 1)

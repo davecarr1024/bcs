@@ -61,6 +61,8 @@ class ALU(component.Component):
     @result.setter
     def result(self, result: int) -> None:
         self.__result.value = result
+        self.carry = result >= byte.Byte.max() or result < 0
+        self.zero = self.result == 0
 
     @property
     def add(self) -> bool:
@@ -116,11 +118,6 @@ class ALU(component.Component):
         else:
             self.status &= ~self.ZERO
 
-    def _set_result_and_status(self, result: int) -> None:
-        self.result = result
-        self.carry = result >= byte.Byte.max() or result < 0
-        self.zero = self.result == 0
-
     @typing.override
     def update(self) -> None:
         super().update()
@@ -130,8 +127,8 @@ class ALU(component.Component):
             self.carry = False
 
         if self.add:
-            self._set_result_and_status(int(self.carry) + self.lhs + self.rhs)
+            self.result = int(self.carry) + self.lhs + self.rhs
         elif self.inc:
-            self._set_result_and_status(self.lhs + 1)
+            self.result = self.lhs + 1
         elif self.dec:
-            self._set_result_and_status(self.lhs - 1)
+            self.result = self.lhs - 1

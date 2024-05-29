@@ -5,6 +5,8 @@ from pycom.components import errorable
 Entry: typing.TypeAlias = typing.Union[
     "reference.Reference",
     "statement.Statement",
+    int,
+    str,
 ]
 
 
@@ -120,10 +122,12 @@ class Program(errorable.Errorable):
 
     def with_entry(self, entry: Entry) -> "Program":
         match entry:
-            case reference.Reference():
+            case reference.Reference() | int():
                 return self.with_value(entry)
             case statement.Statement():
                 return self.with_statement(entry)
+            case str():
+                return self.with_label(entry)
 
     def with_entries(
         self,

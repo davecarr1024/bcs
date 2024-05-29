@@ -46,7 +46,7 @@ class ALUTest(unittest.TestCase):
         alu.add = False
         alu.update()
         self.assertEqual(alu.result, 0)
-        self.assertFalse(alu.zero)
+        self.assertTrue(alu.zero)
 
     def test_add(self) -> None:
         alu = pycom.ALU(pycom.Bus())

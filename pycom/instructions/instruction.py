@@ -124,6 +124,13 @@ class Instruction(errorable.Errorable):
             )
         return self.operand_instances[operand_type]
 
+    @property
+    def opcodes(self) -> list[int]:
+        return [
+            operand_instance.opcode
+            for operand_instance in self.operand_instances.values()
+        ]
+
     def statement(self, operand: operand.Operand) -> statement.Statement:
         return self.operand_instance(type(operand)).statement(operand)
 

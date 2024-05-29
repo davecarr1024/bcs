@@ -20,6 +20,8 @@ class Computer(component.Component):
     ) -> None:
         self.bus = bus.Bus()
         self.__a = register.Register(self.bus, "a")
+        self.__x = register.Register(self.bus, "x")
+        self.__y = register.Register(self.bus, "y")
         self.__instruction_buffer = register.Register(self.bus, "instruction_buffer")
         self.memory = memory.Memory(self.bus, data=data)
         self.__program_counter = program_counter.ProgramCounter(self.bus)
@@ -32,6 +34,8 @@ class Computer(component.Component):
             children=frozenset(
                 {
                     self.__a,
+                    self.__x,
+                    self.__y,
                     self.__instruction_buffer,
                     self.memory,
                     self.__program_counter,
@@ -56,6 +60,22 @@ class Computer(component.Component):
     @a.setter
     def a(self, a: int) -> None:
         self.__a.value = a
+
+    @property
+    def x(self) -> int:
+        return self.__x.value
+
+    @x.setter
+    def x(self, x: int) -> None:
+        self.__x.value = x
+
+    @property
+    def y(self) -> int:
+        return self.__y.value
+
+    @y.setter
+    def y(self, y: int) -> None:
+        self.__y.value = y
 
     @typing.override
     def _str_line(self) -> str:
