@@ -1,0 +1,18 @@
+[project]
+name = "pysh"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+requires-python = ">=3.13"
+dependencies = [
+    "black==24.10.0",
+    "pyright==1.1.390",
+    'pytest',
+    'pytest-subtests',
+    "ruff==0.8.2",
+]
+
+[tool.pyright]
+include = ["pysh"]
+
+[tool.ruff]
